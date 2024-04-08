@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html data-color-mode="light" data-dark-theme="dark" data-light-theme="light" lang="zh-CN">
+<head>
+    <meta content="text/html; charset=utf-8" http-equiv="content-type" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <link href="//cdn.staticfile.net/Primer/21.0.7/primer.css" rel="stylesheet" />
+    <link rel="icon" href="https://github.githubassets.com/favicons/favicon.svg"><script>
+        let theme = localStorage.getItem("meek_theme") || "light";
+        document.documentElement.setAttribute("data-color-mode", theme);
+    </script>
+<meta name="description" content="Spring 七种事务传播性介绍">
+<title>Spring 七种事务传播性介绍</title>
+
+
+</head>
+<style>
+body{box-sizing: border-box;min-width: 200px;max-width: 900px;margin: 20px auto;padding: 45px;font-size: 16px;font-family: sans-serif;line-height: 1.25;}
+#header{display:flex;padding-bottom:8px;border-bottom: 1px solid var(--borderColor-muted, var(--color-border-muted));margin-bottom: 16px;}
+#footer {margin-top:64px; text-align: center;font-size: small;}
+
+</style>
+
+<style>
+.postTitle{margin: auto 0;font-size:40px;font-weight:bold;}
+.title-right{display:flex;margin:auto 0 0 auto;}
+.title-right .circle{padding: 14px 16px;margin-right:8px;}
+#postBody{border-bottom: 1px solid var(--color-border-default);padding-bottom:36px;}
+#postBody hr{height:2px;}
+#cmButton{height:48px;margin-top:48px;}
+#comments{margin-top:64px;}
+.g-emoji{font-size:24px;}
+@media (max-width: 600px) {
+    body {padding: 8px;}
+    .postTitle{font-size:24px;}
+}
+</style>
+
+
+
+
+<body>
+    <div id="header">
+<h1 class="postTitle">Spring 七种事务传播性介绍</h1>
+<div class="title-right">
+    <a href="https://yakun4566.github.io" id="buttonHome" class="btn btn-invisible circle" title="首页">
+        <svg class="octicon" width="16" height="16">
+            <path id="pathHome" fill-rule="evenodd"></path>
+        </svg>
+    </a>
+    
+    <a href="https://github.com/yakun4566/yakun4566.github.io/issues/1" target="_blank" class="btn btn-invisible circle" title="Issue">
+        <svg class="octicon" width="16" height="16">
+            <path id="pathIssue" fill-rule="evenodd"></path>
+        </svg>
+    </a>
+    
+
+    <a class="btn btn-invisible circle" onclick="modeSwitch();" title="切换主题">
+        <svg class="octicon" width="16" height="16" >
+            <path id="themeSwitch" fill-rule="evenodd"></path>
+        </svg>
+    </a>
+
+</div>
+</div>
+    <div id="content">
+<div class="markdown-body" id="postBody"><p>本文主要介绍了 Spring 事务传播性的相关知识。</p>
+<p>Spring 中定义了 7 种事务传播性：</p>
+<p>PROPAGATION_REQUIRED</p>
+<p>PROPAGATION_SUPPORTS</p>
+<p>PROPAGATION_MANDATORY</p>
+<p>PROPAGATION_REQUIRES_NEW</p>
+<p>PROPAGATION_NOT_SUPPORTED</p>
+<p>PROPAGATION_NEVER</p>
+<p>PROPAGATION_NESTED</p>
+<p>在 Spring 环境中，含有事务的方法嵌套调用，事务是如何传递的规则，以及每种规则是如何开展工作的。文章还提到每种事务传播性是如何使用的，方便读者依据实际的场景，使用不同的事务规则。</p>
+<p>一、什么是 Spring 事务的传播性</p>
+<p>Spring 事务传播性是指， 在 Spring 的环境中，当多个含有事务的方法嵌套调用时，每个事务方法都处于自己事务的上下文中，其提交或者回滚行为应该如何处理。</p>
+<p>通俗讲，就是当一个事务方法调用另外一个事务方法时，事务如何跨上下文传播。</p>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/yakun4566/yakun4566.github.io/assets/18443998/71d034b4-c2a5-4472-99e6-cb3997b7fd68"><img src="https://github.com/yakun4566/yakun4566.github.io/assets/18443998/71d034b4-c2a5-4472-99e6-cb3997b7fd68" alt="image" style="max-width: 100%;"></a></p>
+<p>1）当事务方法 A 调用事务方法 B 时，事务方法 B 是合并到事务方法 A 中，还是开启新事务？</p>
+<p>2）当事务方法 B 抛出异常时  ，在合并事务或者开启新的事务的场景中，事务的回滚是如何处理的 ？</p>
+<p>以上事务的处理规则，都取决于事务传播级别的设置。</p>
+<p>二、事务的传播性都有哪些行为</p>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/yakun4566/yakun4566.github.io/assets/18443998/f93f779b-389d-4127-a199-ae58fa2629cc"><img src="https://github.com/yakun4566/yakun4566.github.io/assets/18443998/f93f779b-389d-4127-a199-ae58fa2629cc" alt="image" style="max-width: 100%;"></a></p>
+<p>事务的传播行为，主要分为三种类型，分别是：支持当前事务、不支持当前事务、嵌套事务。</p>
+<p>2.1 支持当前事务</p>
+<p>REQUIRED：默认的事务传播级别，表示如果当前方法已在事务内，该方法就在当前事务中执行，否则，开启一个新的事务并在其上下文中执行。</p>
+<p>SUPPORTED：当前方法在事务内，则在其上下文中执行该方法，否则，开启一个新的事务。</p>
+<p>MANDATORY：必须在事务中执行，否则，将抛出异常。</p>
+<p>2.2 不支持当前事务</p>
+<p>REQUIRES_NEW：无论当前是否有事务上下文，都会开启一个事务  。如果已经有一个事务在执行 ，则正在执行的事务将被挂起 ，新开启的事务会被执行。</p>
+<p>事务之间相互独立，互不干扰。</p>
+<p>NOT_SUPPORTED：不支持事务，如果当前存在事务上下文，则挂起当前事务，然后以非事务的方式执行。</p>
+<p>NEVER：不能在事务中执行，如果当前存在事务上下文，则抛出异常。</p>
+<p>2.3 嵌套事务</p>
+<p>NESTED：嵌套事务，如果当前已存在一个事务的上下文中，则在嵌套事务中执行，如果抛异常，则回滚嵌套事务，而不影响其他事务的操作。</p>
+<p>三、每种事务的传播性如何工作</p>
+<p>3.1 REQUIRED</p>
+<p>默认的事务传播行为，保证多个嵌套的事务方法在同一个事务内执行，并且同时提交，或者出现异常时，同时回滚。</p>
+<p>这个机制可以满足大多数业务场景。</p>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/yakun4566/yakun4566.github.io/assets/18443998/2bc89917-b525-4df8-a516-940f4928dec3"><img src="https://github.com/yakun4566/yakun4566.github.io/assets/18443998/2bc89917-b525-4df8-a516-940f4928dec3" alt="image" style="max-width: 100%;"></a></p>
+<p>例子 ：</p>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/yakun4566/yakun4566.github.io/assets/18443998/50a50469-7301-41e3-96d6-f180b861af0e"><img src="https://github.com/yakun4566/yakun4566.github.io/assets/18443998/50a50469-7301-41e3-96d6-f180b861af0e" alt="image" style="max-width: 100%;"></a></p>
+<p>1）类 TestAService 的方法通过声明式事务的方式，加上了事务注解 <a class="user-mention notranslate" data-hovercard-type="user" data-hovercard-url="/users/transactional/hovercard" data-octo-click="hovercard-link-click" data-octo-dimensions="link_type:self" href="https://github.com/transactional">@transactional</a> ，并设置事务的传播性为 REQUIRED。</p>
+<p>2）调用者调用 TestAService 的 A 方法时，如果调用者没有开启事务，那么 A 方法会开启一个事务。</p>
+<p>A 方法的具体执行过程如下 ：</p>
+<p>a. 执行 insert，但没有提交；</p>
+<p>b. 调用 TestBServcie 的 B 方法，由于 B 方法也声明了事务，并且传播性是 REQUIRED，所以方法 B 的事务，合并到方法 A 开启的事务中。</p>
+<p>c. 方法 B 执行 insert 操作，此时也没有提交。</p>
+<p>3）由于这两个方法的操作都在同一个事务中执行，当这两个方法所有操作执行成功之后，提交事务。</p>
+<p>嵌套调用链路：</p>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/yakun4566/yakun4566.github.io/assets/18443998/112def4e-22e4-4cc2-a525-f2e6c17f9c4d"><img src="https://github.com/yakun4566/yakun4566.github.io/assets/18443998/112def4e-22e4-4cc2-a525-f2e6c17f9c4d" alt="image" style="max-width: 100%;"></a></p>
+<p>当方法 B 执行时抛出了 Exception 异常后，事务是如何处理的 ？</p>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/yakun4566/yakun4566.github.io/assets/18443998/7e65ccd4-afaf-46be-9b3d-04cdc7d41524"><img src="https://github.com/yakun4566/yakun4566.github.io/assets/18443998/7e65ccd4-afaf-46be-9b3d-04cdc7d41524" alt="image" style="max-width: 100%;"></a></p>
+<p>1）方法 B 声明了事务，insert 操作会回滚</p>
+<p>2）由于方法 A 和方法 B 同属一个事务，方法 A 也会执行回滚，由此说明该规则保证了事务的原子性。</p>
+<p>嵌套调用，异常后的链路：</p>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/yakun4566/yakun4566.github.io/assets/18443998/747d0b4b-d62f-4a0e-ab59-84599a320894"><img src="https://github.com/yakun4566/yakun4566.github.io/assets/18443998/747d0b4b-d62f-4a0e-ab59-84599a320894" alt="image" style="max-width: 100%;"></a></p>
+<p>如果 方法 B 抛出异常后，方法 A 使用 try-catch 处理了方法 B 的异常（如下代码），并没有向外抛出，此时事务又如何处理的 ？</p>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/yakun4566/yakun4566.github.io/assets/18443998/ba553a33-7309-4b57-9955-e7cbf6c2cedc"><img src="https://github.com/yakun4566/yakun4566.github.io/assets/18443998/ba553a33-7309-4b57-9955-e7cbf6c2cedc" alt="image" style="max-width: 100%;"></a></p>
+<p>方法 A 也会回滚。</p>
+<p>从事务的特性我们可知，事务具有原子性。方法 A 和方法 B 同属一个事务，当方法 B 抛出异常，触发回滚操作后，整个事务的操作都会回滚。</p>
+<p>因此，Spring 在处理事务过程中，当事务的传播性设置为 REQUIRED，在整个事务的调用链上，任何一个环节抛出的异常都会导致全局回滚。</p>
+<p>3.2 REQUIRES_ NEW</p>
+<p>每次都开启一 个新的事务。</p>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/yakun4566/yakun4566.github.io/assets/18443998/c04c4f6e-278a-4234-9e66-5388decfecce"><img src="https://github.com/yakun4566/yakun4566.github.io/assets/18443998/c04c4f6e-278a-4234-9e66-5388decfecce" alt="image" style="max-width: 100%;"></a></p>
+<p>例子：</p>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/yakun4566/yakun4566.github.io/assets/18443998/30240515-5581-4e31-96d8-4931ad9fb841"><img src="https://github.com/yakun4566/yakun4566.github.io/assets/18443998/30240515-5581-4e31-96d8-4931ad9fb841" alt="image" style="max-width: 100%;"></a></p>
+<p>上面例子中，方法 B 的传播性设置为 REQUIRES_NEW，方法 A 仍然是 REQUIRED，当 A 调用 B 时，具体调用链路如下：</p>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/yakun4566/yakun4566.github.io/assets/18443998/e7a9a09e-8221-4602-9285-70cc114ee912"><img src="https://github.com/yakun4566/yakun4566.github.io/assets/18443998/e7a9a09e-8221-4602-9285-70cc114ee912" alt="image" style="max-width: 100%;"></a></p>
+<p>具体执行过程：</p>
+<p>方法 A 被执行前，如果调用者没有开启事务，方法 A 开启一个事务 1，然后执行 insert ，此时没有提交；</p>
+<p>方法 B 的事务传播性设置为 REQUIRES_NEW，当被方法 A 调用时，此时方法 A 的事务 1 会被挂起，方法 B 开启自己的事务 2，然后执行 insert，此时并没有提交；</p>
+<p>当方法 B 执行完毕后，提交事务 2；</p>
+<p>恢复事务 1，最终提交。</p>
+<p>当 方法 B 执行时抛出了异常，会发生什么？</p>
+<p>方法 B 的 insert 操作会被回滚掉，方法 A 不受影响。但这里有个前提，方法 A 需要 try-catch 方法 B 的异常，使其异常不会往上传递，从而导致方法 A 接收到异常，导致回滚。</p>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/yakun4566/yakun4566.github.io/assets/18443998/3eb92e2a-1616-4dc3-8206-6f3b50933fe5"><img src="https://github.com/yakun4566/yakun4566.github.io/assets/18443998/3eb92e2a-1616-4dc3-8206-6f3b50933fe5" alt="image" style="max-width: 100%;"></a></p>
+<p>3.3  SUPPORTED</p>
+<p>当外层方法 A 存在事务，方法 B 加入到当前事务中，以事务的方式执行。</p>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/yakun4566/yakun4566.github.io/assets/18443998/f9ee4955-6db7-4951-afed-3e17b517a890"><img src="https://github.com/yakun4566/yakun4566.github.io/assets/18443998/f9ee4955-6db7-4951-afed-3e17b517a890" alt="image" style="max-width: 100%;"></a></p>
+<p>当外层方法 A 不存在事务，方法 B 不会创建新的事务，以非事务的方式执行。</p>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/yakun4566/yakun4566.github.io/assets/18443998/a6baf60b-4067-487a-8be5-d521606957e6"><img src="https://github.com/yakun4566/yakun4566.github.io/assets/18443998/a6baf60b-4067-487a-8be5-d521606957e6" alt="image" style="max-width: 100%;"></a></p>
+<p>例子 1：</p>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/yakun4566/yakun4566.github.io/assets/18443998/8813612d-b83b-4c88-907e-7953969d792e"><img src="https://github.com/yakun4566/yakun4566.github.io/assets/18443998/8813612d-b83b-4c88-907e-7953969d792e" alt="image" style="max-width: 100%;"></a></p>
+<p>以上例子，方法 A 没有加事务注解，方法 B 的加了事务注解，并且传播为 SUPPORTS。</p>
+<p>具体执行过程：</p>
+<p>方法 A 以非事务的方式执行 insert 操作。</p>
+<p>方法 B 被调用，由于其外层事务 A 没有开启事务，方法 B 也是以非事务方法执行 insert 操作。</p>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/yakun4566/yakun4566.github.io/assets/18443998/2b2ea03d-756b-4982-910c-3b5f80cd9529"><img src="https://github.com/yakun4566/yakun4566.github.io/assets/18443998/2b2ea03d-756b-4982-910c-3b5f80cd9529" alt="image" style="max-width: 100%;"></a></p>
+<p>例子 2：</p>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/yakun4566/yakun4566.github.io/assets/18443998/5ee9a1b5-8051-4f58-b0ef-3f91b4e45e8c"><img src="https://github.com/yakun4566/yakun4566.github.io/assets/18443998/5ee9a1b5-8051-4f58-b0ef-3f91b4e45e8c" alt="image" style="max-width: 100%;"></a></p>
+<p>以上例子，方法 A 和 B 都加上了事务注解，其中方法 A 的传播性为 REQUIRED，方法 B 的传播性为 SUPPORTS。</p>
+<p>具体执行过程：</p>
+<p>如果方法 A 的调用方没有开启事务，则方法 A 开启事务，并执行 insert 操作，但没有提交；</p>
+<p>方法 B 被调用，由于其外层方法 A 开启了事务，因此方法 B 加入到方法 A 开启的事务中，并执行 insert, 但没有提交；</p>
+<p>当事务中的所有操作执行成功后，事务提交。</p>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/yakun4566/yakun4566.github.io/assets/18443998/3b3baa36-d27c-41b3-bfbd-43552d3f7a7b"><img src="https://github.com/yakun4566/yakun4566.github.io/assets/18443998/3b3baa36-d27c-41b3-bfbd-43552d3f7a7b" alt="image" style="max-width: 100%;"></a></p>
+<p>3.4  NOT_SUPPORTED</p>
+<p>不支持事务。</p>
+<p>如果外层方法存在事务，则挂起外层事务，以非事务方式执行，执行完毕后，恢复外层事务。</p>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/yakun4566/yakun4566.github.io/assets/18443998/d5b651a3-73d9-4922-a4ad-66e44486c1e9"><img src="https://github.com/yakun4566/yakun4566.github.io/assets/18443998/d5b651a3-73d9-4922-a4ad-66e44486c1e9" alt="image" style="max-width: 100%;"></a></p>
+<p>例子：</p>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/yakun4566/yakun4566.github.io/assets/18443998/e60b4c4d-3585-4a32-91ad-20023c7a6abf"><img src="https://github.com/yakun4566/yakun4566.github.io/assets/18443998/e60b4c4d-3585-4a32-91ad-20023c7a6abf" alt="image" style="max-width: 100%;"></a></p>
+<p>以上例子：方法 A 和 B 都加上了事务注解，方法 A 的传播性为 REQUIRED, 方法 B 为 NOT_SUPPORTED。</p>
+<p>具体执行过程：</p>
+<p>如 A 的调用方没有开启事务，方法 A 开启事务，并执行 insert，但没有提交。</p>
+<p>方法 A 调用方法 B 时，方法 B 的传播性为 NOT_SUPPORTED, 不支持事务，然后挂起外层方法 A 的事务，方法 B 以非事务的方式执行 insert。</p>
+<p>方法 B 执行完毕后，恢复方法 A 的事务，最终提交事务。</p>
+<p>调用链路过程：</p>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/yakun4566/yakun4566.github.io/assets/18443998/ff5c4c19-ac74-41a0-9cdc-6488aa56ac68"><img src="https://github.com/yakun4566/yakun4566.github.io/assets/18443998/ff5c4c19-ac74-41a0-9cdc-6488aa56ac68" alt="image" style="max-width: 100%;"></a></p>
+<p>3.5 NEVER</p>
+<p>不支持事务</p>
+<p>当外层方法 A 开启了事务，方法 B 抛出异常</p>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/yakun4566/yakun4566.github.io/assets/18443998/0cd2c17d-2a7a-48f2-b75e-0a12ad88bfb1"><img src="https://github.com/yakun4566/yakun4566.github.io/assets/18443998/0cd2c17d-2a7a-48f2-b75e-0a12ad88bfb1" alt="image" style="max-width: 100%;"></a></p>
+<p>例子：</p>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/yakun4566/yakun4566.github.io/assets/18443998/ce04854f-6eb5-4e0e-a616-0fcf10f89f4d"><img src="https://github.com/yakun4566/yakun4566.github.io/assets/18443998/ce04854f-6eb5-4e0e-a616-0fcf10f89f4d" alt="image" style="max-width: 100%;"></a></p>
+<p>以上代码，两个方法都打上了事务注解，方法 A 的传播性是 REQUIRED, 方法 B 的传播性是 NEVER。</p>
+<p>具体执行过程：</p>
+<p>方法 A 开启事务，执行 insert, 没有提交。</p>
+<p>含有事务的方法 A 调用方法 B，方法 B 的传播性是 NEVER, 表示不支持事务，因此方法 B 抛出异常。</p>
+<p>方法 A 的事务执行回滚。</p>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/yakun4566/yakun4566.github.io/assets/18443998/648820e5-6443-4c6e-80ef-a598e605c802"><img src="https://github.com/yakun4566/yakun4566.github.io/assets/18443998/648820e5-6443-4c6e-80ef-a598e605c802" alt="image" style="max-width: 100%;"></a></p>
+<p>3.6 MANDATORY</p>
+<p>必须在事务中执行。</p>
+<p>如果外层方法 A 没有开启事务，方法 B 抛出异常。</p>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/yakun4566/yakun4566.github.io/assets/18443998/ac49a1c0-4479-4e81-8fc6-9eba2bd5d9e4"><img src="https://github.com/yakun4566/yakun4566.github.io/assets/18443998/ac49a1c0-4479-4e81-8fc6-9eba2bd5d9e4" alt="image" style="max-width: 100%;"></a></p>
+<p>如果外层方法 A 开启了事务，方法 B 加入事务，方法 A&amp;B 在同一事务中执行。</p>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/yakun4566/yakun4566.github.io/assets/18443998/5f748e93-efaf-437d-874b-72f9ed43c2f4"><img src="https://github.com/yakun4566/yakun4566.github.io/assets/18443998/5f748e93-efaf-437d-874b-72f9ed43c2f4" alt="image" style="max-width: 100%;"></a></p>
+<p>例子：</p>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/yakun4566/yakun4566.github.io/assets/18443998/3d34c7c2-c95b-4fc3-99c6-78b0ceefd10c"><img src="https://github.com/yakun4566/yakun4566.github.io/assets/18443998/3d34c7c2-c95b-4fc3-99c6-78b0ceefd10c" alt="image" style="max-width: 100%;"></a></p>
+<p>以上例子，方法 A 没有加事务注解，方法 B 的传播性为 MANDATORY。</p>
+<p>具体执行过程：</p>
+<p>方法 A 的调用方如果本身没有开启事务，方法 A 执行前不会开启事务。</p>
+<p>当非事务方法 A 调用方法 B 时，由于方法 B 的传播性为 MANDATORY，必须在事务中执行，条件不满足，抛出异常。</p>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/yakun4566/yakun4566.github.io/assets/18443998/b1f283ed-ed56-47ea-9c43-894bcde6a2f5"><img src="https://github.com/yakun4566/yakun4566.github.io/assets/18443998/b1f283ed-ed56-47ea-9c43-894bcde6a2f5" alt="image" style="max-width: 100%;"></a></p>
+<p>3.7 NESTED</p>
+<p>嵌套事务</p>
+<p>如果外层方法 A 不存在事务，内层方法 B 的规则与 REQUIRED 一致。</p>
+<p>如果外层方法 A 存在事务，内层方法 B 做为外层方法 A 事务的子事务执行，两个方法是一起提交，但子事务是独立回滚。</p>
+<p>内层方法 B 抛出异常，则会回滚方法 B 的所有操作，但不影响外层事务方法 A。（方法 A 需要 try-catch 子事务，避免异常传递到父层事务）</p>
+<p>外层方法 A 回滚，则内层方法 B 也会回滚。</p>
+<p>该传播性的特点是可以保存状态点，当回滚时，只会回滚到某一个状态点，保证了子事务之间的独立性，避免嵌套事务的全局回滚。</p>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/yakun4566/yakun4566.github.io/assets/18443998/6b2cefd2-a76b-422d-9781-6bf505242962"><img src="https://github.com/yakun4566/yakun4566.github.io/assets/18443998/6b2cefd2-a76b-422d-9781-6bf505242962" alt="image" style="max-width: 100%;"></a></p>
+<p>例子：</p>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/yakun4566/yakun4566.github.io/assets/18443998/ede90b12-be13-4630-b2c7-d53b8174f8da"><img src="https://github.com/yakun4566/yakun4566.github.io/assets/18443998/ede90b12-be13-4630-b2c7-d53b8174f8da" alt="image" style="max-width: 100%;"></a></p>
+<p>以上例子，方法 A 的传播性为 REQUIRED, 方法 B 为 NESTED。</p>
+<p>具体执行过程：</p>
+<p>方法 A 执行时，如调用方没有开启事务，则开启一个事务。</p>
+<p>方法 B 被外层方法 A 调用时，因为方法 B 的传播性为 NESTED，方法 B 在此处建立 savepoint, 标记 insert 行为。</p>
+<p>当方法 B 抛出异常，其 insert 操作会回滚，但只会回滚到 savepoint，（前提是方法 A 要 try-catch 方法 B，使方法 B 的异常不会往外传递）。</p>
+<p>方法 B 回滚后，方法 A 的事务提交。</p>
+<p>调用链路：</p>
+<p><a target="_blank" rel="noopener noreferrer" href="https://github.com/yakun4566/yakun4566.github.io/assets/18443998/ff1cf1ca-be3a-405d-af11-84f013327c90"><img src="https://github.com/yakun4566/yakun4566.github.io/assets/18443998/ff1cf1ca-be3a-405d-af11-84f013327c90" alt="image" style="max-width: 100%;"></a></p>
+<p>四、总结</p>
+<p>本文解释了 Spring 框架中的事务传播性，即多个业务方法之间调用时事务如何处理的规则。Spring 提供了七种传播级别，如</p>
+<p>PROPAGATION_REQUIRED、</p>
+<p>PROPAGATION_REQUIRES_NEW 等。</p>
+<p>每种级别都有适用场景和限制，本文提供了一些示例，介绍了声明式事务如何使用，每种事务的规则，产生哪种行为，当方法抛出异常时，事务的提交和回滚是如何被处理的。正确处理事务对于任何企业级应用程序都是必要的，了解 Spring 事务传播性是构建高效、可靠和可扩展应用程序的关键。</p>
+<p>END</p></div>
+<div style="font-size:small;margin-top:8px;float:right;"></div>
+<button class="btn btn-block" type="button" onclick="openComments()" id="cmButton">评论</button>
+<div class="comments" id="comments"></div>
+</div>
+    <div id="footer">Copyright © <span id="year"></span><a href="https://yakun4566.github.io"> Blog Title </a>
+<p>
+<span id="runday"></span>Powered by <a href="https://meekdai.com/Gmeek.html" target="_blank">Gmeek</a>
+</p>
+
+<script>
+if(""!=""){
+    var now=new Date();
+    var startSite=new Date("");
+    var diff=now.getTime()-startSite.getTime();
+    var diffDay=Math.floor(diff/(1000*60*60*24));
+    document.getElementById("year").innerHTML=now.getFullYear();
+    if(""!=""){document.getElementById("runday").innerHTML=" • "+"网站运行"+diffDay+"天"+" • ";}
+    else{document.getElementById("runday").innerHTML="网站运行"+diffDay+"天"+" • ";}
+}
+</script>
+</div>
+</body>
+<script>
+var IconList={'sun': 'M8 10.5a2.5 2.5 0 100-5 2.5 2.5 0 000 5zM8 12a4 4 0 100-8 4 4 0 000 8zM8 0a.75.75 0 01.75.75v1.5a.75.75 0 01-1.5 0V.75A.75.75 0 018 0zm0 13a.75.75 0 01.75.75v1.5a.75.75 0 01-1.5 0v-1.5A.75.75 0 018 13zM2.343 2.343a.75.75 0 011.061 0l1.06 1.061a.75.75 0 01-1.06 1.06l-1.06-1.06a.75.75 0 010-1.06zm9.193 9.193a.75.75 0 011.06 0l1.061 1.06a.75.75 0 01-1.06 1.061l-1.061-1.06a.75.75 0 010-1.061zM16 8a.75.75 0 01-.75.75h-1.5a.75.75 0 010-1.5h1.5A.75.75 0 0116 8zM3 8a.75.75 0 01-.75.75H.75a.75.75 0 010-1.5h1.5A.75.75 0 013 8zm10.657-5.657a.75.75 0 010 1.061l-1.061 1.06a.75.75 0 11-1.06-1.06l1.06-1.06a.75.75 0 011.06 0zm-9.193 9.193a.75.75 0 010 1.06l-1.06 1.061a.75.75 0 11-1.061-1.06l1.06-1.061a.75.75 0 011.061 0z', 'moon': 'M9.598 1.591a.75.75 0 01.785-.175 7 7 0 11-8.967 8.967.75.75 0 01.961-.96 5.5 5.5 0 007.046-7.046.75.75 0 01.175-.786zm1.616 1.945a7 7 0 01-7.678 7.678 5.5 5.5 0 107.678-7.678z', 'sync': 'M1.705 8.005a.75.75 0 0 1 .834.656 5.5 5.5 0 0 0 9.592 2.97l-1.204-1.204a.25.25 0 0 1 .177-.427h3.646a.25.25 0 0 1 .25.25v3.646a.25.25 0 0 1-.427.177l-1.38-1.38A7.002 7.002 0 0 1 1.05 8.84a.75.75 0 0 1 .656-.834ZM8 2.5a5.487 5.487 0 0 0-4.131 1.869l1.204 1.204A.25.25 0 0 1 4.896 6H1.25A.25.25 0 0 1 1 5.75V2.104a.25.25 0 0 1 .427-.177l1.38 1.38A7.002 7.002 0 0 1 14.95 7.16a.75.75 0 0 1-1.49.178A5.5 5.5 0 0 0 8 2.5Z', 'home': 'M6.906.664a1.749 1.749 0 0 1 2.187 0l5.25 4.2c.415.332.657.835.657 1.367v7.019A1.75 1.75 0 0 1 13.25 15h-3.5a.75.75 0 0 1-.75-.75V9H7v5.25a.75.75 0 0 1-.75.75h-3.5A1.75 1.75 0 0 1 1 13.25V6.23c0-.531.242-1.034.657-1.366l5.25-4.2Zm1.25 1.171a.25.25 0 0 0-.312 0l-5.25 4.2a.25.25 0 0 0-.094.196v7.019c0 .138.112.25.25.25H5.5V8.25a.75.75 0 0 1 .75-.75h3.5a.75.75 0 0 1 .75.75v5.25h2.75a.25.25 0 0 0 .25-.25V6.23a.25.25 0 0 0-.094-.195Z', 'github': 'M8 0c4.42 0 8 3.58 8 8a8.013 8.013 0 0 1-5.45 7.59c-.4.08-.55-.17-.55-.38 0-.27.01-1.13.01-2.2 0-.75-.25-1.23-.54-1.48 1.78-.2 3.65-.88 3.65-3.95 0-.88-.31-1.59-.82-2.15.08-.2.36-1.02-.08-2.12 0 0-.67-.22-2.2.82-.64-.18-1.32-.27-2-.27-.68 0-1.36.09-2 .27-1.53-1.03-2.2-.82-2.2-.82-.44 1.1-.16 1.92-.08 2.12-.51.56-.82 1.28-.82 2.15 0 3.06 1.86 3.75 3.64 3.95-.23.2-.44.55-.51 1.07-.46.21-1.61.55-2.33-.66-.15-.24-.6-.83-1.23-.82-.67.01-.27.38.01.53.34.19.73.9.82 1.13.16.45.68 1.31 2.69.94 0 .67.01 1.3.01 1.49 0 .21-.15.45-.55.38A7.995 7.995 0 0 1 0 8c0-4.42 3.58-8 8-8Z'};
+var utterancesLoad=0;
+
+let themeSettings={
+    "dark": ["dark","moon","#00f0ff","dark-blue"],
+    "light": ["light","sun","#ff5000","github-light"],
+    "auto": ["auto","sync","","preferred-color-scheme"]
+};
+function changeTheme(mode, icon, color, utheme){
+    document.documentElement.setAttribute("data-color-mode",mode);
+    document.getElementById("themeSwitch").setAttribute("d",value=IconList[icon]);
+    document.getElementById("themeSwitch").parentNode.style.color=color;
+    if(utterancesLoad==1){utterancesTheme(utheme);}
+}
+function modeSwitch(){
+    let currentMode=document.documentElement.getAttribute('data-color-mode');
+    let newMode = currentMode === "light" ? "dark" : currentMode === "dark" ? "auto" : "light";
+    localStorage.setItem("meek_theme", newMode);
+    if(themeSettings[newMode]){
+        changeTheme(...themeSettings[newMode]);
+    }
+}
+function utterancesTheme(theme){
+    const message={type:'set-theme',theme: theme};
+    const iframe=document.getElementsByClassName('utterances-frame')[0];
+    iframe.contentWindow.postMessage(message,'https://utteranc.es');
+}
+if(themeSettings[theme]){changeTheme(...themeSettings[theme]);}
+console.log("\n %c Gmeek last https://github.com/Meekdai/Gmeek \n\n","padding:5px 0;background:#02d81d;color:#fff");
+</script>
+
+<script>
+document.getElementById("pathHome").setAttribute("d",IconList["home"]);
+document.getElementById("pathIssue").setAttribute("d",IconList["github"]);
+
+function openComments(){
+    cm=document.getElementById("comments");
+    cmButton=document.getElementById("cmButton");
+    cmButton.innerHTML="loading";
+    span=document.createElement("span");
+    span.setAttribute("class","AnimatedEllipsis");
+    cmButton.appendChild(span);
+
+    script=document.createElement("script");
+    script.setAttribute("src","https://utteranc.es/client.js");
+    script.setAttribute("repo","yakun4566/yakun4566.github.io");
+    script.setAttribute("issue-term","title");
+    
+    if(localStorage.getItem("meek_theme")=="dark"){script.setAttribute("theme","dark-blue");}
+    else if(localStorage.getItem("meek_theme")=="light") {script.setAttribute("theme","github-light");}
+    else{script.setAttribute("theme","preferred-color-scheme");}
+    
+    script.setAttribute("crossorigin","anonymous");
+    script.setAttribute("async","");
+    cm.appendChild(script);
+
+    int=self.setInterval("iFrameLoading()",200);
+}
+
+function iFrameLoading(){
+    var utterances=document.getElementsByClassName('utterances');
+    if(utterances.length==1){
+        if(utterances[0].style.height!=""){
+            utterancesLoad=1;
+            int=window.clearInterval(int);
+            document.getElementById("cmButton").style.display="none";
+            console.log("utterances Load OK");
+        }
+    }
+}
+</script>
+
+
+
+</html>
