@@ -1,0 +1,1556 @@
+<!DOCTYPE html>
+<html data-color-mode="light" data-dark-theme="dark" data-light-theme="light" lang="zh-CN">
+<head>
+    <meta content="text/html; charset=utf-8" http-equiv="content-type" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <link href="//cdn.staticfile.net/Primer/21.0.7/primer.css" rel="stylesheet" />
+    <link rel="icon" href="https://github.githubassets.com/favicons/favicon.svg"><script>
+        let theme = localStorage.getItem("meek_theme") || "light";
+        document.documentElement.setAttribute("data-color-mode", theme);
+    </script>
+<meta name="description" content="Mybatis代码生成器Mybatis-Generator使用详解">
+<title>Mybatis代码生成器Mybatis-Generator使用详解</title>
+<link href="//unpkg.com/@wooorm/starry-night@2.1.1/style/both.css" rel="stylesheet" />
+
+</head>
+<style>
+body{box-sizing: border-box;min-width: 200px;max-width: 900px;margin: 20px auto;padding: 45px;font-size: 16px;font-family: sans-serif;line-height: 1.25;}
+#header{display:flex;padding-bottom:8px;border-bottom: 1px solid var(--borderColor-muted, var(--color-border-muted));margin-bottom: 16px;}
+#footer {margin-top:64px; text-align: center;font-size: small;}
+
+</style>
+
+<style>
+.postTitle{margin: auto 0;font-size:40px;font-weight:bold;}
+.title-right{display:flex;margin:auto 0 0 auto;}
+.title-right .circle{padding: 14px 16px;margin-right:8px;}
+#postBody{border-bottom: 1px solid var(--color-border-default);padding-bottom:36px;}
+#postBody hr{height:2px;}
+#cmButton{height:48px;margin-top:48px;}
+#comments{margin-top:64px;}
+.g-emoji{font-size:24px;}
+@media (max-width: 600px) {
+    body {padding: 8px;}
+    .postTitle{font-size:24px;}
+}
+</style>
+
+
+
+
+<body>
+    <div id="header">
+<h1 class="postTitle">Mybatis代码生成器Mybatis-Generator使用详解</h1>
+<div class="title-right">
+    <a href="https://yakun4566.github.io" id="buttonHome" class="btn btn-invisible circle" title="首页">
+        <svg class="octicon" width="16" height="16">
+            <path id="pathHome" fill-rule="evenodd"></path>
+        </svg>
+    </a>
+    
+    <a href="https://github.com/yakun4566/yakun4566.github.io/issues/2" target="_blank" class="btn btn-invisible circle" title="Issue">
+        <svg class="octicon" width="16" height="16">
+            <path id="pathIssue" fill-rule="evenodd"></path>
+        </svg>
+    </a>
+    
+
+    <a class="btn btn-invisible circle" onclick="modeSwitch();" title="切换主题">
+        <svg class="octicon" width="16" height="16" >
+            <path id="themeSwitch" fill-rule="evenodd"></path>
+        </svg>
+    </a>
+
+</div>
+</div>
+    <div id="content">
+<div class="markdown-body" id="postBody"><h1>[Mybatis代码生成器Mybatis-Generator使用详解]</h1>
+<h2>前提<a href="#%E5%89%8D%E6%8F%90">#</a></h2>
+<p>最近在做创业项目的时候因为有比较多的新需求，需要频繁基于<code class="notranslate">DDL</code>生成<code class="notranslate">Mybatis</code>适合的实体、<code class="notranslate">Mapper</code>接口和映射文件。其中，代码生成器是<code class="notranslate">MyBatis Generator(MBG)</code>，用到了<code class="notranslate">Mybatis-Generator-Core</code>相关依赖，这里通过一篇文章详细地分析这个代码生成器的使用方式。本文编写的时候使用的<code class="notranslate">Mybatis-Generator</code>版本为<code class="notranslate">1.4.0</code>，其他版本没有进行过调研。</p>
+<h2>引入插件<a href="#%E5%BC%95%E5%85%A5%E6%8F%92%E4%BB%B6">#</a></h2>
+<p><code class="notranslate">Mybatis-Generator</code>的运行方式有很多种：</p>
+<ul>
+<li>基于<code class="notranslate">mybatis-generator-core-x.x.x.jar</code>和其<code class="notranslate">XML</code>配置文件，通过命令行运行。</li>
+<li>通过<code class="notranslate">Ant</code>的<code class="notranslate">Task</code>结合其<code class="notranslate">XML</code>配置文件运行。</li>
+<li>通过<code class="notranslate">Maven</code>插件运行。</li>
+<li>通过<code class="notranslate">Java</code>代码和其<code class="notranslate">XML</code>配置文件运行。</li>
+<li>通过<code class="notranslate">Java</code>代码和编程式配置运行。</li>
+<li>通过<code class="notranslate">Eclipse Feature</code>运行。</li>
+</ul>
+<p>这里只介绍通过<code class="notranslate">Maven</code>插件运行和通过<code class="notranslate">Java</code>代码和其<code class="notranslate">XML</code>配置文件运行这两种方式，两种方式有个特点：都要提前编写好<code class="notranslate">XML</code>配置文件。个人感觉<code class="notranslate">XML</code>配置文件相对直观，后文会花大量篇幅去说明<code class="notranslate">XML</code>配置文件中的配置项及其作用。这里先注意一点：默认的配置文件为<code class="notranslate">ClassPath:generatorConfig.xml</code>。</p>
+<h3>通过编码和配置文件运行<a href="#%E9%80%9A%E8%BF%87%E7%BC%96%E7%A0%81%E5%92%8C%E9%85%8D%E7%BD%AE%E6%96%87%E4%BB%B6%E8%BF%90%E8%A1%8C">#</a></h3>
+<p>通过编码方式去运行插件先需要引入<code class="notranslate">mybatis-generator-core</code>依赖，编写本文的时候最新的版本为：</p>
+<div class="highlight highlight-text-xml"><pre class="notranslate">&lt;<span class="pl-ent">dependency</span>&gt;
+    &lt;<span class="pl-ent">groupId</span>&gt;org.mybatis.generator&lt;/<span class="pl-ent">groupId</span>&gt;
+    &lt;<span class="pl-ent">artifactId</span>&gt;mybatis-generator-core&lt;/<span class="pl-ent">artifactId</span>&gt;
+    &lt;<span class="pl-ent">version</span>&gt;1.4.0&lt;/<span class="pl-ent">version</span>&gt;
+&lt;/<span class="pl-ent">dependency</span>&gt;</pre></div>
+<p>假设编写好的<code class="notranslate">XML</code>配置文件是<code class="notranslate">ClassPath</code>下的<code class="notranslate">generator-configuration.xml</code>，那么使用代码生成器的编码方式大致如下：</p>
+<div class="highlight highlight-source-java"><pre class="notranslate"><span class="pl-smi">List</span>&lt;<span class="pl-smi">String</span>&gt; <span class="pl-s1">warnings</span> = <span class="pl-k">new</span> <span class="pl-smi">ArrayList</span>&lt;&gt;();
+<span class="pl-c">// 如果已经存在生成过的文件是否进行覆盖</span>
+<span class="pl-smi">boolean</span> <span class="pl-s1">overwrite</span> = <span class="pl-c1">true</span>;
+<span class="pl-smi">File</span> <span class="pl-s1">configFile</span> = <span class="pl-k">new</span> <span class="pl-smi">File</span>(<span class="pl-s">"ClassPath路径/generator-configuration.xml"</span>);
+<span class="pl-smi">ConfigurationParser</span> <span class="pl-s1">cp</span> = <span class="pl-k">new</span> <span class="pl-smi">ConfigurationParser</span>(<span class="pl-s1">warnings</span>);
+<span class="pl-smi">Configuration</span> <span class="pl-s1">config</span> = <span class="pl-s1">cp</span>.<span class="pl-en">parseConfiguration</span>(<span class="pl-s1">configFile</span>);
+<span class="pl-smi">DefaultShellCallback</span> <span class="pl-s1">callback</span> = <span class="pl-k">new</span> <span class="pl-smi">DefaultShellCallback</span>(<span class="pl-s1">overwrite</span>);
+<span class="pl-smi">MyBatisGenerator</span> <span class="pl-s1">generator</span> = <span class="pl-k">new</span> <span class="pl-smi">MyBatisGenerator</span>(<span class="pl-s1">config</span>, <span class="pl-s1">callback</span>, <span class="pl-s1">warnings</span>);
+<span class="pl-s1">generator</span>.<span class="pl-en">generate</span>(<span class="pl-c1">null</span>);</pre></div>
+<h3>通过Maven插件运行<a href="#%E9%80%9A%E8%BF%87maven%E6%8F%92%E4%BB%B6%E8%BF%90%E8%A1%8C">#</a></h3>
+<p>如果使用<code class="notranslate">Maven</code>插件，那么<strong>不需要</strong>引入<code class="notranslate">mybatis-generator-core</code>依赖，只需要引入一个<code class="notranslate">Maven</code>的插件<code class="notranslate">mybatis-generator-maven-plugin</code>：</p>
+<div class="highlight highlight-text-xml"><pre class="notranslate">&lt;<span class="pl-ent">plugins</span>&gt;
+    &lt;<span class="pl-ent">plugin</span>&gt;
+        &lt;<span class="pl-ent">groupId</span>&gt;org.mybatis.generator&lt;/<span class="pl-ent">groupId</span>&gt;
+        &lt;<span class="pl-ent">artifactId</span>&gt;mybatis-generator-maven-plugin&lt;/<span class="pl-ent">artifactId</span>&gt;
+        &lt;<span class="pl-ent">version</span>&gt;1.4.0&lt;/<span class="pl-ent">version</span>&gt;
+        &lt;<span class="pl-ent">executions</span>&gt;
+            &lt;<span class="pl-ent">execution</span>&gt;
+                &lt;<span class="pl-ent">id</span>&gt;Generate MyBatis Artifacts&lt;/<span class="pl-ent">id</span>&gt;
+                &lt;<span class="pl-ent">goals</span>&gt;
+                    &lt;<span class="pl-ent">goal</span>&gt;generate&lt;/<span class="pl-ent">goal</span>&gt;
+                &lt;/<span class="pl-ent">goals</span>&gt;
+            &lt;/<span class="pl-ent">execution</span>&gt;
+        &lt;/<span class="pl-ent">executions</span>&gt;
+        &lt;<span class="pl-ent">configuration</span>&gt;
+            <span class="pl-c"><span class="pl-c">&lt;!--</span> 输出详细信息 <span class="pl-c">--&gt;</span></span>
+            &lt;<span class="pl-ent">verbose</span>&gt;true&lt;/<span class="pl-ent">verbose</span>&gt;
+            <span class="pl-c"><span class="pl-c">&lt;!--</span> 覆盖生成文件 <span class="pl-c">--&gt;</span></span>
+            &lt;<span class="pl-ent">overwrite</span>&gt;true&lt;/<span class="pl-ent">overwrite</span>&gt;
+            <span class="pl-c"><span class="pl-c">&lt;!--</span> 定义配置文件 <span class="pl-c">--&gt;</span></span>
+            &lt;<span class="pl-ent">configurationFile</span>&gt;${basedir}/src/main/resources/generator-configuration.xml&lt;/<span class="pl-ent">configurationFile</span>&gt;
+        &lt;/<span class="pl-ent">configuration</span>&gt;
+    &lt;/<span class="pl-ent">plugin</span>&gt;
+&lt;/<span class="pl-ent">plugins</span>&gt;</pre></div>
+<p><code class="notranslate">mybatis-generator-maven-plugin</code>的更详细配置和可选参数可以参考：<a href="http://mybatis.org/generator/running/runningWithMaven.html" rel="nofollow">Running With Maven</a>。插件配置完毕之后，使用下面的命令即可运行：</p>
+<div class="highlight highlight-source-shell"><pre class="notranslate">mvn mybatis-generator:generate</pre></div>
+<h2>XML配置文件详解<a href="#xml%E9%85%8D%E7%BD%AE%E6%96%87%E4%BB%B6%E8%AF%A6%E8%A7%A3">#</a></h2>
+<p><code class="notranslate">XML</code>配置文件才是<code class="notranslate">Mybatis-Generator</code>的核心，它用于控制代码生成的所有行为。所有非标签独有的公共配置的<code class="notranslate">Key</code>可以在<code class="notranslate">mybatis-generator-core</code>的<code class="notranslate">PropertyRegistry</code>类中找到。下面是一个相对完整的配置文件的模板：</p>
+<div class="highlight highlight-text-xml"><pre class="notranslate">&lt;?<span class="pl-ent">xml</span><span class="pl-e"> version</span>=<span class="pl-s"><span class="pl-pds">"</span>1.0<span class="pl-pds">"</span></span><span class="pl-e"> encoding</span>=<span class="pl-s"><span class="pl-pds">"</span>UTF-8<span class="pl-pds">"</span></span>?&gt;
+&lt;!<span class="pl-ent">DOCTYPE</span> <span class="pl-e">generatorConfiguration</span>
+  PUBLIC "-//mybatis.org//DTD MyBatis Generator Configuration 1.0//EN"
+  "http://mybatis.org/dtd/mybatis-generator-config_1_0.dtd"&gt;
+
+&lt;<span class="pl-ent">generatorConfiguration</span>&gt;
+
+  &lt;<span class="pl-ent">properties</span> <span class="pl-e">resource</span>=<span class="pl-s"><span class="pl-pds">"</span>db.properties<span class="pl-pds">"</span></span>/&gt;
+
+  &lt;<span class="pl-ent">classPathEntry</span> <span class="pl-e">location</span>=<span class="pl-s"><span class="pl-pds">"</span>/Program Files/IBM/SQLLIB/java/db2java.zip<span class="pl-pds">"</span></span> /&gt;
+
+  &lt;<span class="pl-ent">context</span> <span class="pl-e">id</span>=<span class="pl-s"><span class="pl-pds">"</span>DB2Tables<span class="pl-pds">"</span></span> <span class="pl-e">targetRuntime</span>=<span class="pl-s"><span class="pl-pds">"</span>MyBatis3<span class="pl-pds">"</span></span>&gt;
+
+    &lt;<span class="pl-ent">jdbcConnection</span> <span class="pl-e">driverClass</span>=<span class="pl-s"><span class="pl-pds">"</span>COM.ibm.db2.jdbc.app.DB2Driver<span class="pl-pds">"</span></span>
+        <span class="pl-e">connectionURL</span>=<span class="pl-s"><span class="pl-pds">"</span>jdbc:db2:TEST<span class="pl-pds">"</span></span>
+        <span class="pl-e">userId</span>=<span class="pl-s"><span class="pl-pds">"</span>db2admin<span class="pl-pds">"</span></span>
+        <span class="pl-e">password</span>=<span class="pl-s"><span class="pl-pds">"</span>db2admin<span class="pl-pds">"</span></span>&gt;
+    &lt;/<span class="pl-ent">jdbcConnection</span>&gt;
+
+    &lt;<span class="pl-ent">plugin</span> <span class="pl-e">type</span>=<span class="pl-s"><span class="pl-pds">"</span>org.mybatis.generator.plugins.SerializablePlugin<span class="pl-pds">"</span></span>/&gt;
+
+    &lt;<span class="pl-ent">commentGenerator</span>&gt;
+        &lt;<span class="pl-ent">property</span> <span class="pl-e">name</span>=<span class="pl-s"><span class="pl-pds">"</span>suppressDate<span class="pl-pds">"</span></span> <span class="pl-e">value</span>=<span class="pl-s"><span class="pl-pds">"</span>true<span class="pl-pds">"</span></span>/&gt;
+        &lt;<span class="pl-ent">property</span> <span class="pl-e">name</span>=<span class="pl-s"><span class="pl-pds">"</span>suppressAllComments<span class="pl-pds">"</span></span> <span class="pl-e">value</span>=<span class="pl-s"><span class="pl-pds">"</span>true<span class="pl-pds">"</span></span>/&gt;
+    &lt;/<span class="pl-ent">commentGenerator</span>&gt;
+
+    &lt;<span class="pl-ent">javaTypeResolver</span>&gt;
+      &lt;<span class="pl-ent">property</span> <span class="pl-e">name</span>=<span class="pl-s"><span class="pl-pds">"</span>forceBigDecimals<span class="pl-pds">"</span></span> <span class="pl-e">value</span>=<span class="pl-s"><span class="pl-pds">"</span>false<span class="pl-pds">"</span></span> /&gt;
+    &lt;/<span class="pl-ent">javaTypeResolver</span>&gt;
+
+    &lt;<span class="pl-ent">javaModelGenerator</span> <span class="pl-e">targetPackage</span>=<span class="pl-s"><span class="pl-pds">"</span>test.model<span class="pl-pds">"</span></span> <span class="pl-e">targetProject</span>=<span class="pl-s"><span class="pl-pds">"</span>\MBGTestProject\src<span class="pl-pds">"</span></span>&gt;
+      &lt;<span class="pl-ent">property</span> <span class="pl-e">name</span>=<span class="pl-s"><span class="pl-pds">"</span>enableSubPackages<span class="pl-pds">"</span></span> <span class="pl-e">value</span>=<span class="pl-s"><span class="pl-pds">"</span>true<span class="pl-pds">"</span></span> /&gt;
+      &lt;<span class="pl-ent">property</span> <span class="pl-e">name</span>=<span class="pl-s"><span class="pl-pds">"</span>trimStrings<span class="pl-pds">"</span></span> <span class="pl-e">value</span>=<span class="pl-s"><span class="pl-pds">"</span>true<span class="pl-pds">"</span></span> /&gt;
+    &lt;/<span class="pl-ent">javaModelGenerator</span>&gt;
+
+    &lt;<span class="pl-ent">sqlMapGenerator</span> <span class="pl-e">targetPackage</span>=<span class="pl-s"><span class="pl-pds">"</span>test.xml<span class="pl-pds">"</span></span>  <span class="pl-e">targetProject</span>=<span class="pl-s"><span class="pl-pds">"</span>\MBGTestProject\src<span class="pl-pds">"</span></span>&gt;
+      &lt;<span class="pl-ent">property</span> <span class="pl-e">name</span>=<span class="pl-s"><span class="pl-pds">"</span>enableSubPackages<span class="pl-pds">"</span></span> <span class="pl-e">value</span>=<span class="pl-s"><span class="pl-pds">"</span>true<span class="pl-pds">"</span></span> /&gt;
+    &lt;/<span class="pl-ent">sqlMapGenerator</span>&gt;
+
+    &lt;<span class="pl-ent">javaClientGenerator</span> <span class="pl-e">type</span>=<span class="pl-s"><span class="pl-pds">"</span>XMLMAPPER<span class="pl-pds">"</span></span> <span class="pl-e">targetPackage</span>=<span class="pl-s"><span class="pl-pds">"</span>test.dao<span class="pl-pds">"</span></span>  <span class="pl-e">targetProject</span>=<span class="pl-s"><span class="pl-pds">"</span>\MBGTestProject\src<span class="pl-pds">"</span></span>&gt;
+      &lt;<span class="pl-ent">property</span> <span class="pl-e">name</span>=<span class="pl-s"><span class="pl-pds">"</span>enableSubPackages<span class="pl-pds">"</span></span> <span class="pl-e">value</span>=<span class="pl-s"><span class="pl-pds">"</span>true<span class="pl-pds">"</span></span> /&gt;
+    &lt;/<span class="pl-ent">javaClientGenerator</span>&gt;
+
+    &lt;<span class="pl-ent">table</span> <span class="pl-e">schema</span>=<span class="pl-s"><span class="pl-pds">"</span>DB2ADMIN<span class="pl-pds">"</span></span> <span class="pl-e">tableName</span>=<span class="pl-s"><span class="pl-pds">"</span>ALLTYPES<span class="pl-pds">"</span></span> <span class="pl-e">domainObjectName</span>=<span class="pl-s"><span class="pl-pds">"</span>Customer<span class="pl-pds">"</span></span> &gt;
+      &lt;<span class="pl-ent">property</span> <span class="pl-e">name</span>=<span class="pl-s"><span class="pl-pds">"</span>useActualColumnNames<span class="pl-pds">"</span></span> <span class="pl-e">value</span>=<span class="pl-s"><span class="pl-pds">"</span>true<span class="pl-pds">"</span></span>/&gt;
+      &lt;<span class="pl-ent">generatedKey</span> <span class="pl-e">column</span>=<span class="pl-s"><span class="pl-pds">"</span>ID<span class="pl-pds">"</span></span> <span class="pl-e">sqlStatement</span>=<span class="pl-s"><span class="pl-pds">"</span>DB2<span class="pl-pds">"</span></span> <span class="pl-e">identity</span>=<span class="pl-s"><span class="pl-pds">"</span>true<span class="pl-pds">"</span></span> /&gt;
+      &lt;<span class="pl-ent">columnOverride</span> <span class="pl-e">column</span>=<span class="pl-s"><span class="pl-pds">"</span>DATE_FIELD<span class="pl-pds">"</span></span> <span class="pl-e">property</span>=<span class="pl-s"><span class="pl-pds">"</span>startDate<span class="pl-pds">"</span></span> /&gt;
+      &lt;<span class="pl-ent">ignoreColumn</span> <span class="pl-e">column</span>=<span class="pl-s"><span class="pl-pds">"</span>FRED<span class="pl-pds">"</span></span> /&gt;
+      &lt;<span class="pl-ent">columnOverride</span> <span class="pl-e">column</span>=<span class="pl-s"><span class="pl-pds">"</span>LONG_VARCHAR_FIELD<span class="pl-pds">"</span></span> <span class="pl-e">jdbcType</span>=<span class="pl-s"><span class="pl-pds">"</span>VARCHAR<span class="pl-pds">"</span></span> /&gt;
+    &lt;/<span class="pl-ent">table</span>&gt;
+
+  &lt;/<span class="pl-ent">context</span>&gt;
+&lt;/<span class="pl-ent">generatorConfiguration</span>&gt;</pre></div>
+<p>配置文件中，最外层的标签为<code class="notranslate">&lt;generatorConfiguration&gt;</code>，它的子标签包括：</p>
+<ul>
+<li>0或者1个<code class="notranslate">&lt;properties&gt;</code>标签，用于指定全局配置文件，下面可以通过占位符的形式读取<code class="notranslate">&lt;properties&gt;</code>指定文件中的值。</li>
+<li>0或者N个<code class="notranslate">&lt;classPathEntry&gt;</code>标签，<code class="notranslate">&lt;classPathEntry&gt;</code>只有一个<code class="notranslate">location</code>属性，用于指定数据源驱动包（<code class="notranslate">jar</code>或者<code class="notranslate">zip</code>）的绝对路径，具体选择什么驱动包取决于连接什么类型的数据源。</li>
+<li>1或者N个<code class="notranslate">&lt;context&gt;</code>标签，用于运行时的解析模式和具体的代码生成行为，所以这个标签里面的配置是最重要的。</li>
+</ul>
+<p>下面分别列举和分析一下<code class="notranslate">&lt;context&gt;</code>标签和它的主要子标签的一些属性配置和功能。</p>
+<h3>context标签<a href="#context%E6%A0%87%E7%AD%BE">#</a></h3>
+<p><code class="notranslate">&lt;context&gt;</code>标签在<code class="notranslate">mybatis-generator-core</code>中对应的实现类为<code class="notranslate">org.mybatis.generator.config.Context</code>，它除了大量的子标签配置之外，比较主要的属性是：</p>
+<ul>
+<li><code class="notranslate">id</code>：<code class="notranslate">Context</code>示例的唯一<code class="notranslate">ID</code>，用于输出错误信息时候作为唯一标记。</li>
+<li><code class="notranslate">targetRuntime</code>：用于执行代码生成模式。</li>
+<li><code class="notranslate">defaultModelType</code>：控制<code class="notranslate">Domain</code>类的生成行为。执行引擎为<code class="notranslate">MyBatis3DynamicSql</code>或者<code class="notranslate">MyBatis3Kotlin</code>时忽略此配置，可选值：
+<ul>
+<li><code class="notranslate">conditional</code>：默认值，类似<code class="notranslate">hierarchical</code>，但是只有一个主键的时候会合并所有属性生成在同一个类。</li>
+<li><code class="notranslate">flat</code>：所有内容全部生成在一个对象中。</li>
+<li><code class="notranslate">hierarchical</code>：键生成一个XXKey对象，Blob等单独生成一个对象，其他简单属性在一个对象中。</li>
+</ul>
+</li>
+</ul>
+<p><code class="notranslate">targetRuntime</code>属性的可选值比较多，这里做个简单的小结：</p>
+<table role="table">
+<thead>
+<tr>
+<th align="center">属性</th>
+<th align="center">功能描述</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="center"><code class="notranslate">MyBatis3DynamicSql</code></td>
+<td align="center">默认值，兼容<code class="notranslate">JDK8+</code>和<code class="notranslate">MyBatis 3.4.2+</code>，不会生成<code class="notranslate">XML</code>映射文件，忽略<code class="notranslate">&lt;sqlMapGenerator&gt;</code>的配置项，也就是<code class="notranslate">Mapper</code>全部注解化，依赖于<code class="notranslate">MyBatis Dynamic SQL</code>类库</td>
+</tr>
+<tr>
+<td align="center"><code class="notranslate">MyBatis3Kotlin</code></td>
+<td align="center">行为类似于<code class="notranslate">MyBatis3DynamicSql</code>，不过兼容<code class="notranslate">Kotlin</code>的代码生成</td>
+</tr>
+<tr>
+<td align="center"><code class="notranslate">MyBatis3</code></td>
+<td align="center">提供基本的基于动态<code class="notranslate">SQL</code>的<code class="notranslate">CRUD</code>方法和<code class="notranslate">XXXByExample</code>方法，会生成<code class="notranslate">XML</code>映射文件</td>
+</tr>
+<tr>
+<td align="center"><code class="notranslate">MyBatis3Simple</code></td>
+<td align="center">提供基本的基于动态<code class="notranslate">SQL</code>的<code class="notranslate">CRUD</code>方法，会生成<code class="notranslate">XML</code>映射文件</td>
+</tr>
+<tr>
+<td align="center"><code class="notranslate">MyBatis3DynamicSqlV1</code></td>
+<td align="center">已经过时，不推荐使用</td>
+</tr>
+</tbody>
+</table>
+<p>笔者偏向于把<code class="notranslate">SQL</code>文件和代码分离，所以一般选用<code class="notranslate">MyBatis3</code>或者<code class="notranslate">MyBatis3Simple</code>。例如：</p>
+<div class="highlight highlight-text-xml"><pre class="notranslate">&lt;<span class="pl-ent">context</span> <span class="pl-e">id</span>=<span class="pl-s"><span class="pl-pds">"</span>default<span class="pl-pds">"</span></span> <span class="pl-e">targetRuntime</span>=<span class="pl-s"><span class="pl-pds">"</span>MyBatis3<span class="pl-pds">"</span></span>&gt;</pre></div>
+<p><code class="notranslate">&lt;context&gt;</code>标签支持0或N个<code class="notranslate">&lt;property&gt;</code>标签，<code class="notranslate">&lt;property&gt;</code>的可选属性有：</p>
+<table role="table">
+<thead>
+<tr>
+<th align="center">property属性</th>
+<th align="center">功能描述</th>
+<th align="center">默认值</th>
+<th align="center">备注</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="center"><code class="notranslate">autoDelimitKeywords</code></td>
+<td align="center">是否使用分隔符号括住数据库关键字</td>
+<td align="center"><code class="notranslate">false</code></td>
+<td align="center">例如<code class="notranslate">MySQL</code>中会使用反引号括住关键字</td>
+</tr>
+<tr>
+<td align="center"><code class="notranslate">beginningDelimiter</code></td>
+<td align="center">分隔符号的开始符号</td>
+<td align="center"><code class="notranslate">"</code></td>
+<td align="center"></td>
+</tr>
+<tr>
+<td align="center"><code class="notranslate">endingDelimiter</code></td>
+<td align="center">分隔符号的结束号</td>
+<td align="center"><code class="notranslate">"</code></td>
+<td align="center"></td>
+</tr>
+<tr>
+<td align="center"><code class="notranslate">javaFileEncoding</code></td>
+<td align="center">文件的编码</td>
+<td align="center"><code class="notranslate">系统默认值</code></td>
+<td align="center">来源于<code class="notranslate">java.nio.charset.Charset</code></td>
+</tr>
+<tr>
+<td align="center"><code class="notranslate">javaFormatter</code></td>
+<td align="center">类名和文件格式化器</td>
+<td align="center"><code class="notranslate">DefaultJavaFormatter</code></td>
+<td align="center">见<code class="notranslate">JavaFormatter</code>和<code class="notranslate">DefaultJavaFormatter</code></td>
+</tr>
+<tr>
+<td align="center"><code class="notranslate">targetJava8</code></td>
+<td align="center">是否JDK8和启动其特性</td>
+<td align="center"><code class="notranslate">true</code></td>
+<td align="center"></td>
+</tr>
+<tr>
+<td align="center"><code class="notranslate">kotlinFileEncoding</code></td>
+<td align="center"><code class="notranslate">Kotlin</code>文件编码</td>
+<td align="center"><code class="notranslate">系统默认值</code></td>
+<td align="center">来源于<code class="notranslate">java.nio.charset.Charset</code></td>
+</tr>
+<tr>
+<td align="center"><code class="notranslate">kotlinFormatter</code></td>
+<td align="center"><code class="notranslate">Kotlin</code>类名和文件格式化器</td>
+<td align="center"><code class="notranslate">DefaultKotlinFormatter</code></td>
+<td align="center">见<code class="notranslate">KotlinFormatter</code>和<code class="notranslate">DefaultKotlinFormatter</code></td>
+</tr>
+<tr>
+<td align="center"><code class="notranslate">xmlFormatter</code></td>
+<td align="center"><code class="notranslate">XML</code>文件格式化器</td>
+<td align="center"><code class="notranslate">DefaultXmlFormatter</code></td>
+<td align="center">见<code class="notranslate">XmlFormatter</code>和<code class="notranslate">DefaultXmlFormatter</code></td>
+</tr>
+</tbody>
+</table>
+<h3>jdbcConnection标签<a href="#jdbcconnection%E6%A0%87%E7%AD%BE">#</a></h3>
+<p><code class="notranslate">&lt;jdbcConnection&gt;</code>标签用于<strong>指定数据源的连接信息</strong>，它在<code class="notranslate">mybatis-generator-core</code>中对应的实现类为<code class="notranslate">org.mybatis.generator.config.JDBCConnectionConfiguration</code>，主要属性包括：</p>
+<table role="table">
+<thead>
+<tr>
+<th align="center">属性</th>
+<th align="center">功能描述</th>
+<th align="center">是否必须</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="center"><code class="notranslate">driverClass</code></td>
+<td align="center">数据源驱动的全类名</td>
+<td align="center"><code class="notranslate">Y</code></td>
+</tr>
+<tr>
+<td align="center"><code class="notranslate">connectionURL</code></td>
+<td align="center"><code class="notranslate">JDBC</code>的连接<code class="notranslate">URL</code></td>
+<td align="center"><code class="notranslate">Y</code></td>
+</tr>
+<tr>
+<td align="center"><code class="notranslate">userId</code></td>
+<td align="center">连接到数据源的用户名</td>
+<td align="center"><code class="notranslate">N</code></td>
+</tr>
+<tr>
+<td align="center"><code class="notranslate">password</code></td>
+<td align="center">连接到数据源的密码</td>
+<td align="center"><code class="notranslate">N</code></td>
+</tr>
+</tbody>
+</table>
+<h3>commentGenerator标签<a href="#commentgenerator%E6%A0%87%E7%AD%BE">#</a></h3>
+<p><code class="notranslate">&lt;commentGenerator&gt;</code>标签是可选的，用于<strong>控制生成的实体的注释内容</strong>。它在<code class="notranslate">mybatis-generator-core</code>中对应的实现类为<code class="notranslate">org.mybatis.generator.internal.DefaultCommentGenerator</code>，可以通过可选的<code class="notranslate">type</code>属性指定一个自定义的<code class="notranslate">CommentGenerator</code>实现。<code class="notranslate">&lt;commentGenerator&gt;</code>标签支持0或N个<code class="notranslate">&lt;property&gt;</code>标签，<code class="notranslate">&lt;property&gt;</code>的可选属性有：</p>
+<table role="table">
+<thead>
+<tr>
+<th align="center">property属性</th>
+<th align="center">功能描述</th>
+<th align="center">默认值</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="center"><code class="notranslate">suppressAllComments</code></td>
+<td align="center">是否生成注释</td>
+<td align="center"><code class="notranslate">false</code></td>
+</tr>
+<tr>
+<td align="center"><code class="notranslate">suppressDate</code></td>
+<td align="center">是否在注释中添加生成的时间戳</td>
+<td align="center"><code class="notranslate">false</code></td>
+</tr>
+<tr>
+<td align="center"><code class="notranslate">dateFormat</code></td>
+<td align="center">配合<code class="notranslate">suppressDate</code>使用，指定输出时间戳的格式</td>
+<td align="center"><code class="notranslate">java.util.Date#toString()</code></td>
+</tr>
+<tr>
+<td align="center"><code class="notranslate">addRemarkComments</code></td>
+<td align="center">是否输出表和列的<code class="notranslate">Comment</code>信息</td>
+<td align="center"><code class="notranslate">false</code></td>
+</tr>
+</tbody>
+</table>
+<p>笔者建议保持默认值，也就是什么注释都不输出，生成代码干净的实体。</p>
+<h3>javaTypeResolver标签<a href="#javatyperesolver%E6%A0%87%E7%AD%BE">#</a></h3>
+<p><code class="notranslate">&lt;javaTypeResolver&gt;</code>标签是<code class="notranslate">&lt;context&gt;</code>的子标签，用于解析和计算数据库列类型和<code class="notranslate">Java</code>类型的映射关系，该标签只包含一个<code class="notranslate">type</code>属性，用于指定<code class="notranslate">org.mybatis.generator.api.JavaTypeResolver</code>接口的实现类。<code class="notranslate">&lt;javaTypeResolver&gt;</code>标签支持0或N个<code class="notranslate">&lt;property&gt;</code>标签，<code class="notranslate">&lt;property&gt;</code>的可选属性有：</p>
+<table role="table">
+<thead>
+<tr>
+<th align="center">property属性</th>
+<th align="center">功能描述</th>
+<th align="center">默认值</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="center"><code class="notranslate">forceBigDecimals</code></td>
+<td align="center">是否强制把所有的数字类型强制使用<code class="notranslate">java.math.BigDecimal</code>类型表示</td>
+<td align="center"><code class="notranslate">false</code></td>
+</tr>
+<tr>
+<td align="center"><code class="notranslate">useJSR310Types</code></td>
+<td align="center">是否支持<code class="notranslate">JSR310</code>，主要是<code class="notranslate">JSR310</code>的新日期类型</td>
+<td align="center"><code class="notranslate">false</code></td>
+</tr>
+</tbody>
+</table>
+<p>如果<code class="notranslate">useJSR310Types</code>属性设置为<code class="notranslate">true</code>，那么生成代码的时候类型映射关系如下（主要针对日期时间类型）：</p>
+<table role="table">
+<thead>
+<tr>
+<th align="center">数据库（JDBC）类型</th>
+<th align="center">Java类型</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="center"><code class="notranslate">DATE</code></td>
+<td align="center"><code class="notranslate">java.time.LocalDate</code></td>
+</tr>
+<tr>
+<td align="center"><code class="notranslate">TIME</code></td>
+<td align="center"><code class="notranslate">java.time.LocalTime</code></td>
+</tr>
+<tr>
+<td align="center"><code class="notranslate">TIMESTAMP</code></td>
+<td align="center"><code class="notranslate">java.time.LocalDateTime</code></td>
+</tr>
+<tr>
+<td align="center"><code class="notranslate">TIME_WITH_TIMEZONE</code></td>
+<td align="center"><code class="notranslate">java.time.OffsetTime</code></td>
+</tr>
+<tr>
+<td align="center"><code class="notranslate">TIMESTAMP_WITH_TIMEZONE</code></td>
+<td align="center"><code class="notranslate">java.time.OffsetDateTime</code></td>
+</tr>
+</tbody>
+</table>
+<p>引入<code class="notranslate">mybatis-generator-core</code>后，可以查看<code class="notranslate">JavaTypeResolver</code>的默认实现为<code class="notranslate">JavaTypeResolverDefaultImpl</code>，从它的源码可以得知一些映射关系：</p>
+<div class="highlight highlight-source-java"><pre class="notranslate"><span class="pl-c1">BIGINT</span> --&gt; <span class="pl-smi">Long</span>
+<span class="pl-c1">BIT</span> --&gt; <span class="pl-smi">Boolean</span>
+<span class="pl-c1">INTEGER</span> --&gt; <span class="pl-smi">Integer</span>
+<span class="pl-c1">SMALLINT</span> --&gt; <span class="pl-smi">Short</span>
+<span class="pl-c1">TINYINT</span> --&gt; <span class="pl-s1">Byte</span>
+......</pre></div>
+<p>有些时候，我们希望<code class="notranslate">INTEGER</code>、<code class="notranslate">SMALLINT</code>和<code class="notranslate">TINYINT</code>都映射为<code class="notranslate">Integer</code>，那么我们需要覆盖<code class="notranslate">JavaTypeResolverDefaultImpl</code>的构造方法：</p>
+<div class="highlight highlight-source-java"><pre class="notranslate"><span class="pl-k">public</span> <span class="pl-k">class</span> <span class="pl-smi">DefaultJavaTypeResolver</span> <span class="pl-k">extends</span> <span class="pl-smi">JavaTypeResolverDefaultImpl</span> {
+
+    <span class="pl-k">public</span> <span class="pl-smi">DefaultJavaTypeResolver</span>() {
+        <span class="pl-en">super</span>();
+        <span class="pl-s1">typeMap</span>.<span class="pl-en">put</span>(<span class="pl-smi">Types</span>.<span class="pl-c1">SMALLINT</span>, <span class="pl-k">new</span> <span class="pl-smi">JdbcTypeInformation</span>(<span class="pl-s">"SMALLINT"</span>,
+                <span class="pl-k">new</span> <span class="pl-smi">FullyQualifiedJavaType</span>(<span class="pl-smi">Integer</span>.<span class="pl-k">class</span>.<span class="pl-en">getName</span>())));
+        <span class="pl-s1">typeMap</span>.<span class="pl-en">put</span>(<span class="pl-smi">Types</span>.<span class="pl-c1">TINYINT</span>, <span class="pl-k">new</span> <span class="pl-smi">JdbcTypeInformation</span>(<span class="pl-s">"TINYINT"</span>,
+                <span class="pl-k">new</span> <span class="pl-smi">FullyQualifiedJavaType</span>(<span class="pl-smi">Integer</span>.<span class="pl-k">class</span>.<span class="pl-en">getName</span>())));
+    }
+}</pre></div>
+<p>注意一点的是这种自定义实现<code class="notranslate">JavaTypeResolver</code>接口的方式使用编程式运行<code class="notranslate">MBG</code>会相对方便，如果需要使用<code class="notranslate">Maven</code>插件运行，那么需要把上面的<code class="notranslate">DefaultJavaTypeResolver</code>类打包到插件中。</p>
+<h3>javaModelGenerator标签<a href="#javamodelgenerator%E6%A0%87%E7%AD%BE">#</a></h3>
+<p><code class="notranslate">&lt;javaModelGenerator标签&gt;</code>标签是<code class="notranslate">&lt;context&gt;</code>的子标签，主要用于控制实体（<code class="notranslate">Model</code>）类的代码生成行为。它支持的属性如下：</p>
+<table role="table">
+<thead>
+<tr>
+<th align="center">属性</th>
+<th align="center">功能描述</th>
+<th align="center">是否必须</th>
+<th align="center">备注</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="center"><code class="notranslate">targetPackage</code></td>
+<td align="center">生成的实体类的包名</td>
+<td align="center"><code class="notranslate">Y</code></td>
+<td align="center">例如<code class="notranslate">club.throwable.model</code></td>
+</tr>
+<tr>
+<td align="center"><code class="notranslate">targetProject</code></td>
+<td align="center">生成的实体类文件相对于项目（根目录）的位置</td>
+<td align="center"><code class="notranslate">Y</code></td>
+<td align="center">例如<code class="notranslate">src/main/java</code></td>
+</tr>
+</tbody>
+</table>
+<p><code class="notranslate">&lt;javaModelGenerator标签&gt;</code>标签支持0或N个<code class="notranslate">&lt;property&gt;</code>标签，<code class="notranslate">&lt;property&gt;</code>的可选属性有：</p>
+<table role="table">
+<thead>
+<tr>
+<th align="center">property属性</th>
+<th align="center">功能描述</th>
+<th align="center">默认值</th>
+<th align="center">备注</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="center"><code class="notranslate">constructorBased</code></td>
+<td align="center">是否生成一个带有所有字段属性的构造函数</td>
+<td align="center"><code class="notranslate">false</code></td>
+<td align="center"><code class="notranslate">MyBatis3Kotlin</code>模式下忽略此属性配置</td>
+</tr>
+<tr>
+<td align="center"><code class="notranslate">enableSubPackages</code></td>
+<td align="center">是否允许通过<code class="notranslate">Schema</code>生成子包</td>
+<td align="center"><code class="notranslate">false</code></td>
+<td align="center">如果为<code class="notranslate">true</code>，例如包名为<code class="notranslate">club.throwable</code>，如果<code class="notranslate">Schema</code>为<code class="notranslate">xyz</code>，那么实体类文件最终会生成在<code class="notranslate">club.throwable.xyz</code>目录</td>
+</tr>
+<tr>
+<td align="center"><code class="notranslate">exampleTargetPackage</code></td>
+<td align="center">生成的伴随实体类的<code class="notranslate">Example</code>类的包名</td>
+<td align="center">-</td>
+<td align="center">-</td>
+</tr>
+<tr>
+<td align="center"><code class="notranslate">exampleTargetProject</code></td>
+<td align="center">生成的伴随实体类的<code class="notranslate">Example</code>类文件相对于项目（根目录）的位置</td>
+<td align="center">-</td>
+<td align="center">-</td>
+</tr>
+<tr>
+<td align="center"><code class="notranslate">immutable</code></td>
+<td align="center">是否不可变</td>
+<td align="center"><code class="notranslate">false</code></td>
+<td align="center">如果为<code class="notranslate">true</code>，则不会生成<code class="notranslate">Setter</code>方法，所有字段都使用<code class="notranslate">final</code>修饰，提供一个带有所有字段属性的构造函数</td>
+</tr>
+<tr>
+<td align="center"><code class="notranslate">rootClass</code></td>
+<td align="center">为生成的实体类添加父类</td>
+<td align="center">-</td>
+<td align="center">通过<code class="notranslate">value</code>指定父类的全类名即可</td>
+</tr>
+<tr>
+<td align="center"><code class="notranslate">trimStrings</code></td>
+<td align="center"><code class="notranslate">Setter</code>方法是否对字符串类型进行一次<code class="notranslate">trim</code>操作</td>
+<td align="center"><code class="notranslate">false</code></td>
+<td align="center">-</td>
+</tr>
+</tbody>
+</table>
+<h3>javaClientGenerator标签<a href="#javaclientgenerator%E6%A0%87%E7%AD%BE">#</a></h3>
+<p><code class="notranslate">&lt;javaClientGenerator&gt;</code>标签是<code class="notranslate">&lt;context&gt;</code>的子标签，主要用于控制<code class="notranslate">Mapper</code>接口的代码生成行为。它支持的属性如下：</p>
+<table role="table">
+<thead>
+<tr>
+<th align="center">属性</th>
+<th align="center">功能描述</th>
+<th align="center">是否必须</th>
+<th align="center">备注</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="center"><code class="notranslate">type</code></td>
+<td align="center"><code class="notranslate">Mapper</code>接口生成策略</td>
+<td align="center"><code class="notranslate">Y</code></td>
+<td align="center"><code class="notranslate">&lt;context&gt;</code>标签的<code class="notranslate">targetRuntime</code>属性为<code class="notranslate">MyBatis3DynamicSql</code>或者<code class="notranslate">MyBatis3Kotlin</code>时此属性配置忽略</td>
+</tr>
+<tr>
+<td align="center"><code class="notranslate">targetPackage</code></td>
+<td align="center">生成的<code class="notranslate">Mapper</code>接口的包名</td>
+<td align="center"><code class="notranslate">Y</code></td>
+<td align="center">例如<code class="notranslate">club.throwable.mapper</code></td>
+</tr>
+<tr>
+<td align="center"><code class="notranslate">targetProject</code></td>
+<td align="center">生成的<code class="notranslate">Mapper</code>接口文件相对于项目（根目录）的位置</td>
+<td align="center"><code class="notranslate">Y</code></td>
+<td align="center">例如<code class="notranslate">src/main/java</code></td>
+</tr>
+</tbody>
+</table>
+<p><code class="notranslate">type</code>属性的可选值如下：</p>
+<ul>
+<li><code class="notranslate">ANNOTATEDMAPPER</code>：<code class="notranslate">Mapper</code>接口生成的时候依赖于注解和<code class="notranslate">SqlProviders</code>（也就是纯注解实现），不会生成<code class="notranslate">XML</code>映射文件。</li>
+<li><code class="notranslate">XMLMAPPER</code>：<code class="notranslate">Mapper</code>接口生成接口方法，对应的实现代码生成在<code class="notranslate">XML</code>映射文件中（也就是纯映射文件实现）。</li>
+<li><code class="notranslate">MIXEDMAPPER</code>：<code class="notranslate">Mapper</code>接口生成的时候复杂的方法实现生成在<code class="notranslate">XML</code>映射文件中，而简单的实现通过注解和<code class="notranslate">SqlProviders</code>实现（也就是注解和映射文件混合实现）。</li>
+</ul>
+<p>注意两点：</p>
+<ul>
+<li><code class="notranslate">&lt;context&gt;</code>标签的<code class="notranslate">targetRuntime</code>属性指定为<code class="notranslate">MyBatis3Simple</code>的时候，<code class="notranslate">type</code>只能选用<code class="notranslate">ANNOTATEDMAPPER</code>或者<code class="notranslate">XMLMAPPER</code>。</li>
+<li><code class="notranslate">&lt;context&gt;</code>标签的<code class="notranslate">targetRuntime</code>属性指定为<code class="notranslate">MyBatis3</code>的时候，<code class="notranslate">type</code>可以选用<code class="notranslate">ANNOTATEDMAPPER</code>、<code class="notranslate">XMLMAPPER</code>或者<code class="notranslate">MIXEDMAPPER</code>。</li>
+</ul>
+<p><code class="notranslate">&lt;javaClientGenerator&gt;</code>标签支持0或N个<code class="notranslate">&lt;property&gt;</code>标签，<code class="notranslate">&lt;property&gt;</code>的可选属性有：</p>
+<table role="table">
+<thead>
+<tr>
+<th align="center">property属性</th>
+<th align="center">功能描述</th>
+<th align="center">默认值</th>
+<th align="center">备注</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="center"><code class="notranslate">enableSubPackages</code></td>
+<td align="center">是否允许通过<code class="notranslate">Schema</code>生成子包</td>
+<td align="center"><code class="notranslate">false</code></td>
+<td align="center">如果为<code class="notranslate">true</code>，例如包名为<code class="notranslate">club.throwable</code>，如果<code class="notranslate">Schema</code>为<code class="notranslate">xyz</code>，那么<code class="notranslate">Mapper</code>接口文件最终会生成在<code class="notranslate">club.throwable.xyz</code>目录</td>
+</tr>
+<tr>
+<td align="center"><code class="notranslate">useLegacyBuilder</code></td>
+<td align="center">是否通过<code class="notranslate">SQL Builder</code>生成动态<code class="notranslate">SQL</code></td>
+<td align="center"><code class="notranslate">false</code></td>
+<td align="center"></td>
+</tr>
+<tr>
+<td align="center"><code class="notranslate">rootInterface</code></td>
+<td align="center">为生成的<code class="notranslate">Mapper</code>接口添加父接口</td>
+<td align="center">-</td>
+<td align="center">通过<code class="notranslate">value</code>指定父接口的全类名即可</td>
+</tr>
+</tbody>
+</table>
+<h3>sqlMapGenerator标签<a href="#sqlmapgenerator%E6%A0%87%E7%AD%BE">#</a></h3>
+<p><code class="notranslate">&lt;sqlMapGenerator&gt;</code>标签是<code class="notranslate">&lt;context&gt;</code>的子标签，主要用于控制<code class="notranslate">XML</code>映射文件的代码生成行为。它支持的属性如下：</p>
+<table role="table">
+<thead>
+<tr>
+<th align="center">属性</th>
+<th align="center">功能描述</th>
+<th align="center">是否必须</th>
+<th align="center">备注</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="center"><code class="notranslate">targetPackage</code></td>
+<td align="center">生成的<code class="notranslate">XML</code>映射文件的包名</td>
+<td align="center"><code class="notranslate">Y</code></td>
+<td align="center">例如<code class="notranslate">mappings</code></td>
+</tr>
+<tr>
+<td align="center"><code class="notranslate">targetProject</code></td>
+<td align="center">生成的<code class="notranslate">XML</code>映射文件相对于项目（根目录）的位置</td>
+<td align="center"><code class="notranslate">Y</code></td>
+<td align="center">例如<code class="notranslate">src/main/resources</code></td>
+</tr>
+</tbody>
+</table>
+<p><code class="notranslate">&lt;sqlMapGenerator&gt;</code>标签支持0或N个<code class="notranslate">&lt;property&gt;</code>标签，<code class="notranslate">&lt;property&gt;</code>的可选属性有：</p>
+<table role="table">
+<thead>
+<tr>
+<th align="center">property属性</th>
+<th align="center">功能描述</th>
+<th align="center">默认值</th>
+<th align="center">备注</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="center"><code class="notranslate">enableSubPackages</code></td>
+<td align="center">是否允许通过<code class="notranslate">Schema</code>生成子包</td>
+<td align="center"><code class="notranslate">false</code></td>
+<td align="center">-</td>
+</tr>
+</tbody>
+</table>
+<h3>plugin标签<a href="#plugin%E6%A0%87%E7%AD%BE">#</a></h3>
+<p><code class="notranslate">&lt;plugin&gt;</code>标签是<code class="notranslate">&lt;context&gt;</code>的子标签，用于引入一些插件对代码生成的一些特性进行扩展，该标签只包含一个<code class="notranslate">type</code>属性，用于指定<code class="notranslate">org.mybatis.generator.api.Plugin</code>接口的实现类。内置的插件实现见<a href="http://mybatis.org/generator/reference/plugins.html" rel="nofollow">Supplied Plugins</a>。例如：引入<code class="notranslate">org.mybatis.generator.plugins.SerializablePlugin</code>插件会让生成的实体类自动实现<code class="notranslate">java.io.Serializable</code>接口并且添加<code class="notranslate">serialVersionUID</code>属性。</p>
+<h3>table标签<a href="#table%E6%A0%87%E7%AD%BE">#</a></h3>
+<p><code class="notranslate">&lt;table&gt;</code>标签是<code class="notranslate">&lt;context&gt;</code>的子标签，主要用于配置要生成代码的数据库表格，定制一些代码生成行为等等。它支持的属性众多，列举如下：</p>
+<table role="table">
+<thead>
+<tr>
+<th align="center">属性</th>
+<th align="center">功能描述</th>
+<th align="center">是否必须</th>
+<th align="center">备注</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="center"><code class="notranslate">tableName</code></td>
+<td align="center">数据库表名称</td>
+<td align="center"><code class="notranslate">Y</code></td>
+<td align="center">例如<code class="notranslate">t_order</code></td>
+</tr>
+<tr>
+<td align="center"><code class="notranslate">schema</code></td>
+<td align="center">数据库<code class="notranslate">Schema</code></td>
+<td align="center"><code class="notranslate">N</code></td>
+<td align="center">-</td>
+</tr>
+<tr>
+<td align="center"><code class="notranslate">catalog</code></td>
+<td align="center">数据库<code class="notranslate">Catalog</code></td>
+<td align="center"><code class="notranslate">N</code></td>
+<td align="center">-</td>
+</tr>
+<tr>
+<td align="center"><code class="notranslate">alias</code></td>
+<td align="center">表名称标签</td>
+<td align="center"><code class="notranslate">N</code></td>
+<td align="center">如果指定了此值，则查询列的时候结果格式为<code class="notranslate">alias_column</code></td>
+</tr>
+<tr>
+<td align="center"><code class="notranslate">domainObjectName</code></td>
+<td align="center">表对应的实体类名称，可以通过<code class="notranslate">.</code>指定包路径</td>
+<td align="center"><code class="notranslate">N</code></td>
+<td align="center">如果指定了<code class="notranslate">bar.User</code>，则包名为<code class="notranslate">bar</code>，实体类名称为<code class="notranslate">User</code></td>
+</tr>
+<tr>
+<td align="center"><code class="notranslate">mapperName</code></td>
+<td align="center">表对应的<code class="notranslate">Mapper</code>接口类名称，可以通过<code class="notranslate">.</code>指定包路径</td>
+<td align="center"><code class="notranslate">N</code></td>
+<td align="center">如果指定了<code class="notranslate">bar.UserMapper</code>，则包名为<code class="notranslate">bar</code>，<code class="notranslate">Mapper</code>接口类名称为<code class="notranslate">UserMapper</code></td>
+</tr>
+<tr>
+<td align="center"><code class="notranslate">sqlProviderName</code></td>
+<td align="center">动态<code class="notranslate">SQL</code>提供类<code class="notranslate">SqlProvider</code>的类名称</td>
+<td align="center"><code class="notranslate">N</code></td>
+<td align="center">-</td>
+</tr>
+<tr>
+<td align="center"><code class="notranslate">enableInsert</code></td>
+<td align="center">是否允许生成<code class="notranslate">insert</code>方法</td>
+<td align="center"><code class="notranslate">N</code></td>
+<td align="center">默认值为<code class="notranslate">true</code>，执行引擎为<code class="notranslate">MyBatis3DynamicSql</code>或者<code class="notranslate">MyBatis3Kotlin</code>时忽略此配置</td>
+</tr>
+<tr>
+<td align="center"><code class="notranslate">enableSelectByPrimaryKey</code></td>
+<td align="center">是否允许生成<code class="notranslate">selectByPrimaryKey</code>方法</td>
+<td align="center"><code class="notranslate">N</code></td>
+<td align="center">默认值为<code class="notranslate">true</code>，执行引擎为<code class="notranslate">MyBatis3DynamicSql</code>或者<code class="notranslate">MyBatis3Kotlin</code>时忽略此配置</td>
+</tr>
+<tr>
+<td align="center"><code class="notranslate">enableSelectByExample</code></td>
+<td align="center">是否允许生成<code class="notranslate">selectByExample</code>方法</td>
+<td align="center"><code class="notranslate">N</code></td>
+<td align="center">默认值为<code class="notranslate">true</code>，执行引擎为<code class="notranslate">MyBatis3DynamicSql</code>或者<code class="notranslate">MyBatis3Kotlin</code>时忽略此配置</td>
+</tr>
+<tr>
+<td align="center"><code class="notranslate">enableUpdateByPrimaryKey</code></td>
+<td align="center">是否允许生成<code class="notranslate">updateByPrimaryKey</code>方法</td>
+<td align="center"><code class="notranslate">N</code></td>
+<td align="center">默认值为<code class="notranslate">true</code>，执行引擎为<code class="notranslate">MyBatis3DynamicSql</code>或者<code class="notranslate">MyBatis3Kotlin</code>时忽略此配置</td>
+</tr>
+<tr>
+<td align="center"><code class="notranslate">enableDeleteByPrimaryKey</code></td>
+<td align="center">是否允许生成<code class="notranslate">deleteByPrimaryKey</code>方法</td>
+<td align="center"><code class="notranslate">N</code></td>
+<td align="center">默认值为<code class="notranslate">true</code>，执行引擎为<code class="notranslate">MyBatis3DynamicSql</code>或者<code class="notranslate">MyBatis3Kotlin</code>时忽略此配置</td>
+</tr>
+<tr>
+<td align="center"><code class="notranslate">enableDeleteByExample</code></td>
+<td align="center">是否允许生成<code class="notranslate">deleteByExample</code>方法</td>
+<td align="center"><code class="notranslate">N</code></td>
+<td align="center">默认值为<code class="notranslate">true</code>，执行引擎为<code class="notranslate">MyBatis3DynamicSql</code>或者<code class="notranslate">MyBatis3Kotlin</code>时忽略此配置</td>
+</tr>
+<tr>
+<td align="center"><code class="notranslate">enableCountByExample</code></td>
+<td align="center">是否允许生成<code class="notranslate">countByExample</code>方法</td>
+<td align="center"><code class="notranslate">N</code></td>
+<td align="center">默认值为<code class="notranslate">true</code>，执行引擎为<code class="notranslate">MyBatis3DynamicSql</code>或者<code class="notranslate">MyBatis3Kotlin</code>时忽略此配置</td>
+</tr>
+<tr>
+<td align="center"><code class="notranslate">enableUpdateByExample</code></td>
+<td align="center">是否允许生成<code class="notranslate">updateByExample</code>方法</td>
+<td align="center"><code class="notranslate">N</code></td>
+<td align="center">默认值为<code class="notranslate">true</code>，执行引擎为<code class="notranslate">MyBatis3DynamicSql</code>或者<code class="notranslate">MyBatis3Kotlin</code>时忽略此配置</td>
+</tr>
+<tr>
+<td align="center"><code class="notranslate">selectByPrimaryKeyQueryId</code></td>
+<td align="center"><code class="notranslate">value</code>指定对应的主键列提供列表查询功能</td>
+<td align="center"><code class="notranslate">N</code></td>
+<td align="center">执行引擎为<code class="notranslate">MyBatis3DynamicSql</code>或者<code class="notranslate">MyBatis3Kotlin</code>时忽略此配置</td>
+</tr>
+<tr>
+<td align="center"><code class="notranslate">selectByExampleQueryId</code></td>
+<td align="center"><code class="notranslate">value</code>指定对应的查询<code class="notranslate">ID</code>提供列表查询功能</td>
+<td align="center"><code class="notranslate">N</code></td>
+<td align="center">执行引擎为<code class="notranslate">MyBatis3DynamicSql</code>或者<code class="notranslate">MyBatis3Kotlin</code>时忽略此配置</td>
+</tr>
+<tr>
+<td align="center"><code class="notranslate">modelType</code></td>
+<td align="center">覆盖<code class="notranslate">&lt;context&gt;</code>的<code class="notranslate">defaultModelType</code>属性</td>
+<td align="center"><code class="notranslate">N</code></td>
+<td align="center">见<code class="notranslate">&lt;context&gt;</code>的<code class="notranslate">defaultModelType</code>属性</td>
+</tr>
+<tr>
+<td align="center"><code class="notranslate">escapeWildcards</code></td>
+<td align="center">是否对通配符进行转义</td>
+<td align="center"><code class="notranslate">N</code></td>
+<td align="center">-</td>
+</tr>
+<tr>
+<td align="center"><code class="notranslate">delimitIdentifiers</code></td>
+<td align="center">标记匹配表名称的时候是否需要使用分隔符去标记生成的SQL</td>
+<td align="center"><code class="notranslate">N</code></td>
+<td align="center">-</td>
+</tr>
+<tr>
+<td align="center"><code class="notranslate">delimitAllColumns</code></td>
+<td align="center">是否所有的列都添加分隔符</td>
+<td align="center"><code class="notranslate">N</code></td>
+<td align="center">默认值为<code class="notranslate">false</code>，如果设置为<code class="notranslate">true</code>，所有列名会添加起始和结束分隔符</td>
+</tr>
+</tbody>
+</table>
+<p><code class="notranslate">&lt;table&gt;</code>标签支持0或N个<code class="notranslate">&lt;property&gt;</code>标签，<code class="notranslate">&lt;property&gt;</code>的可选属性有：</p>
+<table role="table">
+<thead>
+<tr>
+<th align="center">property属性</th>
+<th align="center">功能描述</th>
+<th align="center">默认值</th>
+<th align="center">备注</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="center"><code class="notranslate">constructorBased</code></td>
+<td align="center">是否为实体类生成一个带有所有字段的构造函数</td>
+<td align="center"><code class="notranslate">false</code></td>
+<td align="center">执行引擎为<code class="notranslate">MyBatis3Kotlin</code>的时候此属性忽略</td>
+</tr>
+<tr>
+<td align="center"><code class="notranslate">ignoreQualifiersAtRuntime</code></td>
+<td align="center">是否在运行时忽略别名</td>
+<td align="center"><code class="notranslate">false</code></td>
+<td align="center">如果为<code class="notranslate">true</code>，则不会在生成表的时候把<code class="notranslate">schema</code>和<code class="notranslate">catalog</code>作为表的前缀</td>
+</tr>
+<tr>
+<td align="center"><code class="notranslate">immutable</code></td>
+<td align="center">实体类是否不可变</td>
+<td align="center"><code class="notranslate">false</code></td>
+<td align="center">执行引擎为<code class="notranslate">MyBatis3Kotlin</code>的时候此属性忽略</td>
+</tr>
+<tr>
+<td align="center"><code class="notranslate">modelOnly</code></td>
+<td align="center">是否仅仅生成实体类</td>
+<td align="center"><code class="notranslate">false</code></td>
+<td align="center">-</td>
+</tr>
+<tr>
+<td align="center"><code class="notranslate">rootClass</code></td>
+<td align="center">如果配置此属性，则实体类会继承此指定的超类</td>
+<td align="center"><code class="notranslate">-</code></td>
+<td align="center">如果有主键属性会把主键属性在超类生成</td>
+</tr>
+<tr>
+<td align="center"><code class="notranslate">rootInterface</code></td>
+<td align="center">如果配置此属性，则实体类会实现此指定的接口</td>
+<td align="center"><code class="notranslate">-</code></td>
+<td align="center">执行引擎为<code class="notranslate">MyBatis3Kotlin</code>或者<code class="notranslate">MyBatis3DynamicSql</code>的时候此属性忽略</td>
+</tr>
+<tr>
+<td align="center"><code class="notranslate">runtimeCatalog</code></td>
+<td align="center">指定运行时的<code class="notranslate">Catalog</code></td>
+<td align="center"><code class="notranslate">-</code></td>
+<td align="center">当生成表和运行时的表的<code class="notranslate">Catalog</code>不一样的时候可以使用该属性进行配置</td>
+</tr>
+<tr>
+<td align="center"><code class="notranslate">runtimeSchema</code></td>
+<td align="center">指定运行时的<code class="notranslate">Schema</code></td>
+<td align="center"><code class="notranslate">-</code></td>
+<td align="center">当生成表和运行时的表的<code class="notranslate">Schema</code>不一样的时候可以使用该属性进行配置</td>
+</tr>
+<tr>
+<td align="center"><code class="notranslate">runtimeTableName</code></td>
+<td align="center">指定运行时的表名称</td>
+<td align="center"><code class="notranslate">-</code></td>
+<td align="center">当生成表和运行时的表的表名称不一样的时候可以使用该属性进行配置</td>
+</tr>
+<tr>
+<td align="center"><code class="notranslate">selectAllOrderByClause</code></td>
+<td align="center">指定字句内容添加到<code class="notranslate">selectAll()</code>方法的<code class="notranslate">order by</code>子句之中</td>
+<td align="center"><code class="notranslate">-</code></td>
+<td align="center">执行引擎为<code class="notranslate">MyBatis3Simple</code>的时候此属性才适用</td>
+</tr>
+<tr>
+<td align="center"><code class="notranslate">trimStrings</code></td>
+<td align="center">实体类的字符串类型属性会做<code class="notranslate">trim</code>处理</td>
+<td align="center"><code class="notranslate">-</code></td>
+<td align="center">执行引擎为<code class="notranslate">MyBatis3Kotlin</code>的时候此属性忽略</td>
+</tr>
+<tr>
+<td align="center"><code class="notranslate">useActualColumnNames</code></td>
+<td align="center">是否使用列名作为实体类的属性名</td>
+<td align="center"><code class="notranslate">false</code></td>
+<td align="center">-</td>
+</tr>
+<tr>
+<td align="center"><code class="notranslate">useColumnIndexes</code></td>
+<td align="center"><code class="notranslate">XML</code>映射文件中生成的<code class="notranslate">ResultMap</code>使用列索引定义而不是列名称</td>
+<td align="center"><code class="notranslate">false</code></td>
+<td align="center">执行引擎为<code class="notranslate">MyBatis3Kotlin</code>或者<code class="notranslate">MyBatis3DynamicSql</code>的时候此属性忽略</td>
+</tr>
+<tr>
+<td align="center"><code class="notranslate">useCompoundPropertyNames</code></td>
+<td align="center">是否把列名和列备注拼接起来生成实体类属性名</td>
+<td align="center"><code class="notranslate">false</code></td>
+<td align="center">-</td>
+</tr>
+</tbody>
+</table>
+<p><code class="notranslate">&lt;table&gt;</code>标签还支持众多的<strong>非</strong><code class="notranslate">property</code>的子标签：</p>
+<ul>
+<li>0或1个<code class="notranslate">&lt;generatedKey&gt;</code>用于指定主键生成的规则，指定此标签后会生成一个<code class="notranslate">&lt;selectKey&gt;</code>标签：</li>
+</ul>
+<div class="highlight highlight-text-xml"><pre class="notranslate"><span class="pl-c"><span class="pl-c">&lt;!--</span> column：指定主键列 <span class="pl-c">--&gt;</span></span>
+<span class="pl-c"><span class="pl-c">&lt;!--</span> sqlStatement：查询主键的SQL语句，例如填写了MySql，则使用SELECT LAST_INSERT_ID() <span class="pl-c">--&gt;</span></span>
+<span class="pl-c"><span class="pl-c">&lt;!--</span> type：可选值为pre或者post，pre指定selectKey标签的order为BEFORE，post指定selectKey标签的order为AFTER <span class="pl-c">--&gt;</span></span>
+<span class="pl-c"><span class="pl-c">&lt;!--</span> identity：true的时候，指定selectKey标签的order为AFTER <span class="pl-c">--&gt;</span></span>
+&lt;<span class="pl-ent">generatedKey</span> <span class="pl-e">column</span>=<span class="pl-s"><span class="pl-pds">"</span>id<span class="pl-pds">"</span></span> <span class="pl-e">sqlStatement</span>=<span class="pl-s"><span class="pl-pds">"</span>MySql<span class="pl-pds">"</span></span> <span class="pl-e">type</span>=<span class="pl-s"><span class="pl-pds">"</span>post<span class="pl-pds">"</span></span> <span class="pl-e">identity</span>=<span class="pl-s"><span class="pl-pds">"</span>true<span class="pl-pds">"</span></span> /&gt;</pre></div>
+<ul>
+<li>0或1个<code class="notranslate">&lt;domainObjectRenamingRule&gt;</code>用于指定实体类重命名规则：</li>
+</ul>
+<div class="highlight highlight-text-xml"><pre class="notranslate"><span class="pl-c"><span class="pl-c">&lt;!--</span> searchString中正则命中的实体类名部分会替换为replaceString <span class="pl-c">--&gt;</span></span>
+&lt;<span class="pl-ent">domainObjectRenamingRule</span> <span class="pl-e">searchString</span>=<span class="pl-s"><span class="pl-pds">"</span>^Sys<span class="pl-pds">"</span></span> <span class="pl-e">replaceString</span>=<span class="pl-s"><span class="pl-pds">"</span><span class="pl-pds">"</span></span>/&gt;
+<span class="pl-c"><span class="pl-c">&lt;!--</span> 例如 SysUser会变成User <span class="pl-c">--&gt;</span></span>
+<span class="pl-c"><span class="pl-c">&lt;!--</span> 例如 SysUserMapper会变成UserMapper <span class="pl-c">--&gt;</span></span></pre></div>
+<ul>
+<li>0或1个<code class="notranslate">&lt;columnRenamingRule&gt;</code>用于指定列重命名规则：</li>
+</ul>
+<div class="highlight highlight-text-xml"><pre class="notranslate"><span class="pl-c"><span class="pl-c">&lt;!--</span> searchString中正则命中的列名部分会替换为replaceString <span class="pl-c">--&gt;</span></span>
+&lt;<span class="pl-ent">columnRenamingRule</span> <span class="pl-e">searchString</span>=<span class="pl-s"><span class="pl-pds">"</span>^CUST_<span class="pl-pds">"</span></span> <span class="pl-e">replaceString</span>=<span class="pl-s"><span class="pl-pds">"</span><span class="pl-pds">"</span></span>/&gt;
+<span class="pl-c"><span class="pl-c">&lt;!--</span> 例如 CUST_BUSINESS_NAME会变成BUSINESS_NAME（useActualColumnNames=true） <span class="pl-c">--&gt;</span></span>
+<span class="pl-c"><span class="pl-c">&lt;!--</span> 例如 CUST_BUSINESS_NAME会变成businessName（useActualColumnNames=false） <span class="pl-c">--&gt;</span></span></pre></div>
+<ul>
+<li>0或N个<code class="notranslate">&lt;columnOverride&gt;</code>用于指定具体列的覆盖映射规则：</li>
+</ul>
+<div class="highlight highlight-text-xml"><pre class="notranslate"><span class="pl-c"><span class="pl-c">&lt;!--</span> column：指定要覆盖配置的列 <span class="pl-c">--&gt;</span></span>
+<span class="pl-c"><span class="pl-c">&lt;!--</span> property：指定要覆盖配置的属性 <span class="pl-c">--&gt;</span></span>
+<span class="pl-c"><span class="pl-c">&lt;!--</span> delimitedColumnName：是否为列名添加定界符，例如`{column}` <span class="pl-c">--&gt;</span></span>
+<span class="pl-c"><span class="pl-c">&lt;!--</span> isGeneratedAlways：是否一定生成此列 <span class="pl-c">--&gt;</span></span>
+&lt;<span class="pl-ent">columnOverride</span> <span class="pl-e">column</span>=<span class="pl-s"><span class="pl-pds">"</span>customer_name<span class="pl-pds">"</span></span> <span class="pl-e">property</span>=<span class="pl-s"><span class="pl-pds">"</span>customerName<span class="pl-pds">"</span></span> <span class="pl-e">javaType</span>=<span class="pl-s"><span class="pl-pds">"</span><span class="pl-pds">"</span></span> <span class="pl-e">jdbcType</span>=<span class="pl-s"><span class="pl-pds">"</span><span class="pl-pds">"</span></span> <span class="pl-e">typeHandler</span>=<span class="pl-s"><span class="pl-pds">"</span><span class="pl-pds">"</span></span> <span class="pl-e">delimitedColumnName</span>=<span class="pl-s"><span class="pl-pds">"</span><span class="pl-pds">"</span></span> <span class="pl-e">isGeneratedAlways</span>=<span class="pl-s"><span class="pl-pds">"</span><span class="pl-pds">"</span></span>&gt;
+   <span class="pl-c"><span class="pl-c">&lt;!--</span> 覆盖table或者javaModelGenerator级别的trimStrings属性配置 <span class="pl-c">--&gt;</span></span>
+   &lt;<span class="pl-ent">property</span> <span class="pl-e">name</span>=<span class="pl-s"><span class="pl-pds">"</span>trimStrings<span class="pl-pds">"</span></span> <span class="pl-e">value</span>=<span class="pl-s"><span class="pl-pds">"</span>true<span class="pl-pds">"</span></span>/&gt;
+&lt;<span class="pl-ent">columnOverride</span>/&gt;</pre></div>
+<ul>
+<li>0或N个<code class="notranslate">&lt;ignoreColumn&gt;</code>用于指定忽略生成的列：</li>
+</ul>
+<div class="highlight highlight-text-xml"><pre class="notranslate">&lt;<span class="pl-ent">ignoreColumn</span> <span class="pl-e">column</span>=<span class="pl-s"><span class="pl-pds">"</span>version<span class="pl-pds">"</span></span> <span class="pl-e">delimitedColumnName</span>=<span class="pl-s"><span class="pl-pds">"</span>false<span class="pl-pds">"</span></span>/&gt;</pre></div>
+<h2>实战<a href="#%E5%AE%9E%E6%88%98">#</a></h2>
+<p>如果需要深度定制一些代码生成行为，建议引入<code class="notranslate">mybatis-generator-core</code>并且通过编程式执行代码生成方法，否则可以选用<code class="notranslate">Maven</code>插件。假设我们在本地数据<code class="notranslate">local</code>有一张<code class="notranslate">t_order</code>表如下：</p>
+<div class="highlight highlight-source-sql"><pre class="notranslate"><span class="pl-k">CREATE</span> <span class="pl-k">TABLE</span> `<span class="pl-en">t_order</span>`
+(
+    id           <span class="pl-k">BIGINT</span> UNSIGNED <span class="pl-k">PRIMARY KEY</span> COMMENT <span class="pl-s"><span class="pl-pds">'</span>主键<span class="pl-pds">'</span></span>,
+    order_id     <span class="pl-k">VARCHAR</span>(<span class="pl-c1">64</span>)    <span class="pl-k">NOT NULL</span> COMMENT <span class="pl-s"><span class="pl-pds">'</span>订单ID<span class="pl-pds">'</span></span>,
+    create_time  DATETIME       <span class="pl-k">NOT NULL</span> DEFAULT <span class="pl-c1">CURRENT_TIMESTAMP</span> COMMENT <span class="pl-s"><span class="pl-pds">'</span>创建时间<span class="pl-pds">'</span></span>,
+    amount       <span class="pl-k">DECIMAL</span>(<span class="pl-c1">10</span>, <span class="pl-c1">2</span>) <span class="pl-k">NOT NULL</span> DEFAULT <span class="pl-c1">0</span> COMMENT <span class="pl-s"><span class="pl-pds">'</span>金额<span class="pl-pds">'</span></span>,
+    order_status TINYINT        <span class="pl-k">NOT NULL</span> DEFAULT <span class="pl-c1">0</span> COMMENT <span class="pl-s"><span class="pl-pds">'</span>订单状态<span class="pl-pds">'</span></span>,
+    UNIQUE uniq_order_id (<span class="pl-s"><span class="pl-pds">`</span>order_id<span class="pl-pds">`</span></span>)
+) COMMENT <span class="pl-s"><span class="pl-pds">'</span>订单表<span class="pl-pds">'</span></span>;</pre></div>
+<p>假设项目的结构如下：</p>
+<div class="highlight highlight-source-shell"><pre class="notranslate">mbg-sample
+  - main
+   - java
+    - club
+     - throwable
+   - resources</pre></div>
+<p>下面会基于此前提举三个例子。编写基础的<code class="notranslate">XML</code>配置文件：</p>
+<div class="highlight highlight-text-xml"><pre class="notranslate">&lt;?<span class="pl-ent">xml</span><span class="pl-e"> version</span>=<span class="pl-s"><span class="pl-pds">"</span>1.0<span class="pl-pds">"</span></span><span class="pl-e"> encoding</span>=<span class="pl-s"><span class="pl-pds">"</span>UTF-8<span class="pl-pds">"</span></span>?&gt;
+&lt;!<span class="pl-ent">DOCTYPE</span> <span class="pl-e">generatorConfiguration</span>
+        PUBLIC "-//mybatis.org//DTD MyBatis Generator Configuration 1.0//EN"
+        "http://mybatis.org/dtd/mybatis-generator-config_1_0.dtd"&gt;
+&lt;<span class="pl-ent">generatorConfiguration</span>&gt;
+    <span class="pl-c"><span class="pl-c">&lt;!--</span> 驱动包绝对路径 <span class="pl-c">--&gt;</span></span>
+    &lt;<span class="pl-ent">classPathEntry</span>
+            <span class="pl-e">location</span>=<span class="pl-s"><span class="pl-pds">"</span>I:\Develop\Maven-Repository\mysql\mysql-connector-java\5.1.48\mysql-connector-java-5.1.48.jar<span class="pl-pds">"</span></span>/&gt;
+
+    &lt;<span class="pl-ent">context</span> <span class="pl-e">id</span>=<span class="pl-s"><span class="pl-pds">"</span>default<span class="pl-pds">"</span></span> <span class="pl-e">targetRuntime</span>=<span class="pl-s"><span class="pl-pds">"</span>这里选择合适的引擎<span class="pl-pds">"</span></span>&gt;
+
+        &lt;<span class="pl-ent">property</span> <span class="pl-e">name</span>=<span class="pl-s"><span class="pl-pds">"</span>javaFileEncoding<span class="pl-pds">"</span></span> <span class="pl-e">value</span>=<span class="pl-s"><span class="pl-pds">"</span>UTF-8<span class="pl-pds">"</span></span>/&gt;
+
+        <span class="pl-c"><span class="pl-c">&lt;!--</span> 不输出注释 <span class="pl-c">--&gt;</span></span>
+        &lt;<span class="pl-ent">commentGenerator</span>&gt;
+            &lt;<span class="pl-ent">property</span> <span class="pl-e">name</span>=<span class="pl-s"><span class="pl-pds">"</span>suppressDate<span class="pl-pds">"</span></span> <span class="pl-e">value</span>=<span class="pl-s"><span class="pl-pds">"</span>true<span class="pl-pds">"</span></span>/&gt;
+            &lt;<span class="pl-ent">property</span> <span class="pl-e">name</span>=<span class="pl-s"><span class="pl-pds">"</span>suppressAllComments<span class="pl-pds">"</span></span> <span class="pl-e">value</span>=<span class="pl-s"><span class="pl-pds">"</span>true<span class="pl-pds">"</span></span>/&gt;
+        &lt;/<span class="pl-ent">commentGenerator</span>&gt;
+
+        &lt;<span class="pl-ent">jdbcConnection</span> <span class="pl-e">driverClass</span>=<span class="pl-s"><span class="pl-pds">"</span>com.mysql.jdbc.Driver<span class="pl-pds">"</span></span>
+                        <span class="pl-e">connectionURL</span>=<span class="pl-s"><span class="pl-pds">"</span>jdbc:mysql://localhost:3306/local<span class="pl-pds">"</span></span>
+                        <span class="pl-e">userId</span>=<span class="pl-s"><span class="pl-pds">"</span>root<span class="pl-pds">"</span></span>
+                        <span class="pl-e">password</span>=<span class="pl-s"><span class="pl-pds">"</span>root<span class="pl-pds">"</span></span>&gt;
+        &lt;/<span class="pl-ent">jdbcConnection</span>&gt;
+
+        <span class="pl-c"><span class="pl-c">&lt;!--</span> 不强制把所有的数字类型转化为BigDecimal <span class="pl-c">--&gt;</span></span>
+        &lt;<span class="pl-ent">javaTypeResolver</span>&gt;
+            &lt;<span class="pl-ent">property</span> <span class="pl-e">name</span>=<span class="pl-s"><span class="pl-pds">"</span>forceBigDecimals<span class="pl-pds">"</span></span> <span class="pl-e">value</span>=<span class="pl-s"><span class="pl-pds">"</span>false<span class="pl-pds">"</span></span>/&gt;
+        &lt;/<span class="pl-ent">javaTypeResolver</span>&gt;
+
+        &lt;<span class="pl-ent">javaModelGenerator</span> <span class="pl-e">targetPackage</span>=<span class="pl-s"><span class="pl-pds">"</span>club.throwable.entity<span class="pl-pds">"</span></span> <span class="pl-e">targetProject</span>=<span class="pl-s"><span class="pl-pds">"</span>src/main/java<span class="pl-pds">"</span></span>&gt;
+            &lt;<span class="pl-ent">property</span> <span class="pl-e">name</span>=<span class="pl-s"><span class="pl-pds">"</span>enableSubPackages<span class="pl-pds">"</span></span> <span class="pl-e">value</span>=<span class="pl-s"><span class="pl-pds">"</span>true<span class="pl-pds">"</span></span>/&gt;
+        &lt;/<span class="pl-ent">javaModelGenerator</span>&gt;
+
+        &lt;<span class="pl-ent">sqlMapGenerator</span> <span class="pl-e">targetPackage</span>=<span class="pl-s"><span class="pl-pds">"</span>mappings<span class="pl-pds">"</span></span> <span class="pl-e">targetProject</span>=<span class="pl-s"><span class="pl-pds">"</span>src/main/resources<span class="pl-pds">"</span></span>&gt;
+            &lt;<span class="pl-ent">property</span> <span class="pl-e">name</span>=<span class="pl-s"><span class="pl-pds">"</span>enableSubPackages<span class="pl-pds">"</span></span> <span class="pl-e">value</span>=<span class="pl-s"><span class="pl-pds">"</span>true<span class="pl-pds">"</span></span>/&gt;
+        &lt;/<span class="pl-ent">sqlMapGenerator</span>&gt;
+
+        &lt;<span class="pl-ent">javaClientGenerator</span> <span class="pl-e">type</span>=<span class="pl-s"><span class="pl-pds">"</span>这里选择合适的Mapper类型<span class="pl-pds">"</span></span> <span class="pl-e">targetPackage</span>=<span class="pl-s"><span class="pl-pds">"</span>club.throwable.dao<span class="pl-pds">"</span></span> <span class="pl-e">targetProject</span>=<span class="pl-s"><span class="pl-pds">"</span>src/main/java<span class="pl-pds">"</span></span>&gt;
+            &lt;<span class="pl-ent">property</span> <span class="pl-e">name</span>=<span class="pl-s"><span class="pl-pds">"</span>enableSubPackages<span class="pl-pds">"</span></span> <span class="pl-e">value</span>=<span class="pl-s"><span class="pl-pds">"</span>true<span class="pl-pds">"</span></span>/&gt;
+        &lt;/<span class="pl-ent">javaClientGenerator</span>&gt;
+
+        &lt;<span class="pl-ent">table</span> <span class="pl-e">tableName</span>=<span class="pl-s"><span class="pl-pds">"</span>t_order<span class="pl-pds">"</span></span>
+               <span class="pl-e">enableCountByExample</span>=<span class="pl-s"><span class="pl-pds">"</span>false<span class="pl-pds">"</span></span>
+               <span class="pl-e">enableDeleteByExample</span>=<span class="pl-s"><span class="pl-pds">"</span>false<span class="pl-pds">"</span></span>
+               <span class="pl-e">enableSelectByExample</span>=<span class="pl-s"><span class="pl-pds">"</span>false<span class="pl-pds">"</span></span>
+               <span class="pl-e">enableUpdateByExample</span>=<span class="pl-s"><span class="pl-pds">"</span>false<span class="pl-pds">"</span></span>
+               <span class="pl-e">domainObjectName</span>=<span class="pl-s"><span class="pl-pds">"</span>Order<span class="pl-pds">"</span></span>
+               <span class="pl-e">mapperName</span>=<span class="pl-s"><span class="pl-pds">"</span>OrderMapper<span class="pl-pds">"</span></span>&gt;
+            &lt;<span class="pl-ent">generatedKey</span> <span class="pl-e">column</span>=<span class="pl-s"><span class="pl-pds">"</span>id<span class="pl-pds">"</span></span> <span class="pl-e">sqlStatement</span>=<span class="pl-s"><span class="pl-pds">"</span>MySql<span class="pl-pds">"</span></span>/&gt;
+        &lt;/<span class="pl-ent">table</span>&gt;
+    &lt;/<span class="pl-ent">context</span>&gt;
+&lt;/<span class="pl-ent">generatorConfiguration</span>&gt;</pre></div>
+<h3>纯注解<a href="#%E7%BA%AF%E6%B3%A8%E8%A7%A3">#</a></h3>
+<p>使用纯注解需要引入<code class="notranslate">mybatis-dynamic-sql</code>：</p>
+<div class="highlight highlight-text-xml"><pre class="notranslate">&lt;<span class="pl-ent">dependency</span>&gt;
+    &lt;<span class="pl-ent">groupId</span>&gt;org.mybatis.dynamic-sql&lt;/<span class="pl-ent">groupId</span>&gt;
+    &lt;<span class="pl-ent">artifactId</span>&gt;mybatis-dynamic-sql&lt;/<span class="pl-ent">artifactId</span>&gt;
+    &lt;<span class="pl-ent">version</span>&gt;1.1.4&lt;/<span class="pl-ent">version</span>&gt;
+&lt;/<span class="pl-ent">dependency</span>&gt;</pre></div>
+<p>需要修改两个位置：</p>
+<div class="highlight highlight-text-xml"><pre class="notranslate">&lt;<span class="pl-ent">context</span> <span class="pl-e">id</span>=<span class="pl-s"><span class="pl-pds">"</span>default<span class="pl-pds">"</span></span> <span class="pl-e">targetRuntime</span>=<span class="pl-s"><span class="pl-pds">"</span>MyBatis3DynamicSql<span class="pl-pds">"</span></span>&gt;
+...
+
+&lt;<span class="pl-ent">javaClientGenerator</span> <span class="pl-e">type</span>=<span class="pl-s"><span class="pl-pds">"</span>ANNOTATEDMAPPER<span class="pl-pds">"</span></span>
+...</pre></div>
+<p>运行结果会生成三个类：</p>
+<div class="highlight highlight-source-java"><pre class="notranslate"><span class="pl-c">// club.throwable.entity</span>
+<span class="pl-k">public</span> <span class="pl-k">class</span> <span class="pl-smi">Order</span> {
+    <span class="pl-c1">@</span><span class="pl-c1">Generated</span>(<span class="pl-s">"org.mybatis.generator.api.MyBatisGenerator"</span>)
+    <span class="pl-k">private</span> <span class="pl-smi">Long</span> <span class="pl-s1">id</span>;
+
+    <span class="pl-c1">@</span><span class="pl-c1">Generated</span>(<span class="pl-s">"org.mybatis.generator.api.MyBatisGenerator"</span>)
+    <span class="pl-k">private</span> <span class="pl-smi">String</span> <span class="pl-s1">orderId</span>;
+
+    <span class="pl-c1">@</span><span class="pl-c1">Generated</span>(<span class="pl-s">"org.mybatis.generator.api.MyBatisGenerator"</span>)
+    <span class="pl-k">private</span> <span class="pl-smi">Date</span> <span class="pl-s1">createTime</span>;
+
+    <span class="pl-c1">@</span><span class="pl-c1">Generated</span>(<span class="pl-s">"org.mybatis.generator.api.MyBatisGenerator"</span>)
+    <span class="pl-k">private</span> <span class="pl-smi">BigDecimal</span> <span class="pl-s1">amount</span>;
+
+    <span class="pl-c1">@</span><span class="pl-c1">Generated</span>(<span class="pl-s">"org.mybatis.generator.api.MyBatisGenerator"</span>)
+    <span class="pl-k">private</span> <span class="pl-smi">Byte</span> <span class="pl-s1">orderStatus</span>;
+
+    <span class="pl-c1">@</span><span class="pl-c1">Generated</span>(<span class="pl-s">"org.mybatis.generator.api.MyBatisGenerator"</span>)
+    <span class="pl-k">public</span> <span class="pl-smi">Long</span> <span class="pl-en">getId</span>() {
+        <span class="pl-k">return</span> <span class="pl-s1">id</span>;
+    }
+
+    <span class="pl-c1">@</span><span class="pl-c1">Generated</span>(<span class="pl-s">"org.mybatis.generator.api.MyBatisGenerator"</span>)
+    <span class="pl-k">public</span> <span class="pl-smi">void</span> <span class="pl-en">setId</span>(<span class="pl-smi">Long</span> <span class="pl-s1">id</span>) {
+        <span class="pl-smi">this</span>.<span class="pl-s1">id</span> = <span class="pl-s1">id</span>;
+    }
+
+    <span class="pl-c1">@</span><span class="pl-c1">Generated</span>(<span class="pl-s">"org.mybatis.generator.api.MyBatisGenerator"</span>)
+    <span class="pl-k">public</span> <span class="pl-smi">String</span> <span class="pl-en">getOrderId</span>() {
+        <span class="pl-k">return</span> <span class="pl-s1">orderId</span>;
+    }
+
+    <span class="pl-c1">@</span><span class="pl-c1">Generated</span>(<span class="pl-s">"org.mybatis.generator.api.MyBatisGenerator"</span>)
+    <span class="pl-k">public</span> <span class="pl-smi">void</span> <span class="pl-en">setOrderId</span>(<span class="pl-smi">String</span> <span class="pl-s1">orderId</span>) {
+        <span class="pl-smi">this</span>.<span class="pl-s1">orderId</span> = <span class="pl-s1">orderId</span>;
+    }
+
+    <span class="pl-c1">@</span><span class="pl-c1">Generated</span>(<span class="pl-s">"org.mybatis.generator.api.MyBatisGenerator"</span>)
+    <span class="pl-k">public</span> <span class="pl-smi">Date</span> <span class="pl-en">getCreateTime</span>() {
+        <span class="pl-k">return</span> <span class="pl-s1">createTime</span>;
+    }
+
+    <span class="pl-c1">@</span><span class="pl-c1">Generated</span>(<span class="pl-s">"org.mybatis.generator.api.MyBatisGenerator"</span>)
+    <span class="pl-k">public</span> <span class="pl-smi">void</span> <span class="pl-en">setCreateTime</span>(<span class="pl-smi">Date</span> <span class="pl-s1">createTime</span>) {
+        <span class="pl-smi">this</span>.<span class="pl-s1">createTime</span> = <span class="pl-s1">createTime</span>;
+    }
+
+    <span class="pl-c1">@</span><span class="pl-c1">Generated</span>(<span class="pl-s">"org.mybatis.generator.api.MyBatisGenerator"</span>)
+    <span class="pl-k">public</span> <span class="pl-smi">BigDecimal</span> <span class="pl-en">getAmount</span>() {
+        <span class="pl-k">return</span> <span class="pl-s1">amount</span>;
+    }
+
+    <span class="pl-c1">@</span><span class="pl-c1">Generated</span>(<span class="pl-s">"org.mybatis.generator.api.MyBatisGenerator"</span>)
+    <span class="pl-k">public</span> <span class="pl-smi">void</span> <span class="pl-en">setAmount</span>(<span class="pl-smi">BigDecimal</span> <span class="pl-s1">amount</span>) {
+        <span class="pl-smi">this</span>.<span class="pl-s1">amount</span> = <span class="pl-s1">amount</span>;
+    }
+
+    <span class="pl-c1">@</span><span class="pl-c1">Generated</span>(<span class="pl-s">"org.mybatis.generator.api.MyBatisGenerator"</span>)
+    <span class="pl-k">public</span> <span class="pl-smi">Byte</span> <span class="pl-en">getOrderStatus</span>() {
+        <span class="pl-k">return</span> <span class="pl-s1">orderStatus</span>;
+    }
+
+    <span class="pl-c1">@</span><span class="pl-c1">Generated</span>(<span class="pl-s">"org.mybatis.generator.api.MyBatisGenerator"</span>)
+    <span class="pl-k">public</span> <span class="pl-smi">void</span> <span class="pl-en">setOrderStatus</span>(<span class="pl-smi">Byte</span> <span class="pl-s1">orderStatus</span>) {
+        <span class="pl-smi">this</span>.<span class="pl-s1">orderStatus</span> = <span class="pl-s1">orderStatus</span>;
+    }
+}
+
+<span class="pl-c">// club.throwable.dao</span>
+<span class="pl-k">public</span> <span class="pl-k">final</span> <span class="pl-k">class</span> <span class="pl-smi">OrderDynamicSqlSupport</span> {
+    <span class="pl-c1">@</span><span class="pl-c1">Generated</span>(<span class="pl-s">"org.mybatis.generator.api.MyBatisGenerator"</span>)
+    <span class="pl-k">public</span> <span class="pl-k">static</span> <span class="pl-k">final</span> <span class="pl-smi">Order</span> <span class="pl-s1">order</span> = <span class="pl-k">new</span> <span class="pl-smi">Order</span>();
+
+    <span class="pl-c1">@</span><span class="pl-c1">Generated</span>(<span class="pl-s">"org.mybatis.generator.api.MyBatisGenerator"</span>)
+    <span class="pl-k">public</span> <span class="pl-k">static</span> <span class="pl-k">final</span> <span class="pl-smi">SqlColumn</span>&lt;<span class="pl-smi">Long</span>&gt; <span class="pl-s1">id</span> = <span class="pl-s1">order</span>.<span class="pl-s1">id</span>;
+
+    <span class="pl-c1">@</span><span class="pl-c1">Generated</span>(<span class="pl-s">"org.mybatis.generator.api.MyBatisGenerator"</span>)
+    <span class="pl-k">public</span> <span class="pl-k">static</span> <span class="pl-k">final</span> <span class="pl-smi">SqlColumn</span>&lt;<span class="pl-smi">String</span>&gt; <span class="pl-s1">orderId</span> = <span class="pl-s1">order</span>.<span class="pl-s1">orderId</span>;
+
+    <span class="pl-c1">@</span><span class="pl-c1">Generated</span>(<span class="pl-s">"org.mybatis.generator.api.MyBatisGenerator"</span>)
+    <span class="pl-k">public</span> <span class="pl-k">static</span> <span class="pl-k">final</span> <span class="pl-smi">SqlColumn</span>&lt;<span class="pl-smi">Date</span>&gt; <span class="pl-s1">createTime</span> = <span class="pl-s1">order</span>.<span class="pl-s1">createTime</span>;
+
+    <span class="pl-c1">@</span><span class="pl-c1">Generated</span>(<span class="pl-s">"org.mybatis.generator.api.MyBatisGenerator"</span>)
+    <span class="pl-k">public</span> <span class="pl-k">static</span> <span class="pl-k">final</span> <span class="pl-smi">SqlColumn</span>&lt;<span class="pl-smi">BigDecimal</span>&gt; <span class="pl-s1">amount</span> = <span class="pl-s1">order</span>.<span class="pl-s1">amount</span>;
+
+    <span class="pl-c1">@</span><span class="pl-c1">Generated</span>(<span class="pl-s">"org.mybatis.generator.api.MyBatisGenerator"</span>)
+    <span class="pl-k">public</span> <span class="pl-k">static</span> <span class="pl-k">final</span> <span class="pl-smi">SqlColumn</span>&lt;<span class="pl-smi">Byte</span>&gt; <span class="pl-s1">orderStatus</span> = <span class="pl-s1">order</span>.<span class="pl-s1">orderStatus</span>;
+
+    <span class="pl-c1">@</span><span class="pl-c1">Generated</span>(<span class="pl-s">"org.mybatis.generator.api.MyBatisGenerator"</span>)
+    <span class="pl-k">public</span> <span class="pl-k">static</span> <span class="pl-k">final</span> <span class="pl-k">class</span> <span class="pl-smi">Order</span> <span class="pl-k">extends</span> <span class="pl-smi">SqlTable</span> {
+        <span class="pl-k">public</span> <span class="pl-k">final</span> <span class="pl-smi">SqlColumn</span>&lt;<span class="pl-smi">Long</span>&gt; <span class="pl-s1">id</span> = <span class="pl-en">column</span>(<span class="pl-s">"id"</span>, <span class="pl-smi">JDBCType</span>.<span class="pl-c1">BIGINT</span>);
+
+        <span class="pl-k">public</span> <span class="pl-k">final</span> <span class="pl-smi">SqlColumn</span>&lt;<span class="pl-smi">String</span>&gt; <span class="pl-s1">orderId</span> = <span class="pl-en">column</span>(<span class="pl-s">"order_id"</span>, <span class="pl-smi">JDBCType</span>.<span class="pl-c1">VARCHAR</span>);
+
+        <span class="pl-k">public</span> <span class="pl-k">final</span> <span class="pl-smi">SqlColumn</span>&lt;<span class="pl-smi">Date</span>&gt; <span class="pl-s1">createTime</span> = <span class="pl-en">column</span>(<span class="pl-s">"create_time"</span>, <span class="pl-smi">JDBCType</span>.<span class="pl-c1">TIMESTAMP</span>);
+
+        <span class="pl-k">public</span> <span class="pl-k">final</span> <span class="pl-smi">SqlColumn</span>&lt;<span class="pl-smi">BigDecimal</span>&gt; <span class="pl-s1">amount</span> = <span class="pl-en">column</span>(<span class="pl-s">"amount"</span>, <span class="pl-smi">JDBCType</span>.<span class="pl-c1">DECIMAL</span>);
+
+        <span class="pl-k">public</span> <span class="pl-k">final</span> <span class="pl-smi">SqlColumn</span>&lt;<span class="pl-smi">Byte</span>&gt; <span class="pl-s1">orderStatus</span> = <span class="pl-en">column</span>(<span class="pl-s">"order_status"</span>, <span class="pl-smi">JDBCType</span>.<span class="pl-c1">TINYINT</span>);
+
+        <span class="pl-k">public</span> <span class="pl-smi">Order</span>() {
+            <span class="pl-en">super</span>(<span class="pl-s">"t_order"</span>);
+        }
+    }
+}
+
+<span class="pl-c1">@</span><span class="pl-c1">Mapper</span>
+<span class="pl-k">public</span> <span class="pl-k">interface</span> <span class="pl-smi">OrderMapper</span> {
+    <span class="pl-c1">@</span><span class="pl-c1">Generated</span>(<span class="pl-s">"org.mybatis.generator.api.MyBatisGenerator"</span>)
+    <span class="pl-smi">BasicColumn</span>[] <span class="pl-s1">selectList</span> = <span class="pl-smi">BasicColumn</span>.<span class="pl-en">columnList</span>(<span class="pl-s1">id</span>, <span class="pl-s1">orderId</span>, <span class="pl-s1">createTime</span>, <span class="pl-s1">amount</span>, <span class="pl-s1">orderStatus</span>);
+
+    <span class="pl-c1">@</span><span class="pl-c1">Generated</span>(<span class="pl-s">"org.mybatis.generator.api.MyBatisGenerator"</span>)
+    <span class="pl-c1">@</span><span class="pl-c1">SelectProvider</span>(<span class="pl-s1">type</span>=<span class="pl-smi">SqlProviderAdapter</span>.<span class="pl-k">class</span>, <span class="pl-s1">method</span>=<span class="pl-s">"select"</span>)
+    <span class="pl-smi">long</span> <span class="pl-en">count</span>(<span class="pl-smi">SelectStatementProvider</span> <span class="pl-s1">selectStatement</span>);
+
+    <span class="pl-c1">@</span><span class="pl-c1">Generated</span>(<span class="pl-s">"org.mybatis.generator.api.MyBatisGenerator"</span>)
+    <span class="pl-c1">@</span><span class="pl-c1">DeleteProvider</span>(<span class="pl-s1">type</span>=<span class="pl-smi">SqlProviderAdapter</span>.<span class="pl-k">class</span>, <span class="pl-s1">method</span>=<span class="pl-s">"delete"</span>)
+    <span class="pl-smi">int</span> <span class="pl-en">delete</span>(<span class="pl-smi">DeleteStatementProvider</span> <span class="pl-s1">deleteStatement</span>);
+
+    <span class="pl-c1">@</span><span class="pl-c1">Generated</span>(<span class="pl-s">"org.mybatis.generator.api.MyBatisGenerator"</span>)
+    <span class="pl-c1">@</span><span class="pl-c1">InsertProvider</span>(<span class="pl-s1">type</span>=<span class="pl-smi">SqlProviderAdapter</span>.<span class="pl-k">class</span>, <span class="pl-s1">method</span>=<span class="pl-s">"insert"</span>)
+    <span class="pl-c1">@</span><span class="pl-c1">SelectKey</span>(<span class="pl-s1">statement</span>=<span class="pl-s">"SELECT LAST_INSERT_ID()"</span>, <span class="pl-s1">keyProperty</span>=<span class="pl-s">"record.id"</span>, <span class="pl-s1">before</span>=<span class="pl-c1">true</span>, <span class="pl-s1">resultType</span>=<span class="pl-smi">Long</span>.<span class="pl-k">class</span>)
+    <span class="pl-smi">int</span> <span class="pl-en">insert</span>(<span class="pl-smi">InsertStatementProvider</span>&lt;<span class="pl-smi">Order</span>&gt; <span class="pl-s1">insertStatement</span>);
+
+    <span class="pl-c1">@</span><span class="pl-c1">Generated</span>(<span class="pl-s">"org.mybatis.generator.api.MyBatisGenerator"</span>)
+    <span class="pl-c1">@</span><span class="pl-c1">SelectProvider</span>(<span class="pl-s1">type</span>=<span class="pl-smi">SqlProviderAdapter</span>.<span class="pl-k">class</span>, <span class="pl-s1">method</span>=<span class="pl-s">"select"</span>)
+    <span class="pl-c1">@</span><span class="pl-c1">Results</span>(<span class="pl-s1">id</span>=<span class="pl-s">"OrderResult"</span>, <span class="pl-s1">value</span> = {
+        <span class="pl-c1">@</span><span class="pl-c1">Result</span>(<span class="pl-s1">column</span>=<span class="pl-s">"id"</span>, <span class="pl-s1">property</span>=<span class="pl-s">"id"</span>, <span class="pl-s1">jdbcType</span>=<span class="pl-smi">JdbcType</span>.<span class="pl-c1">BIGINT</span>, <span class="pl-s1">id</span>=<span class="pl-c1">true</span>),
+        <span class="pl-c1">@</span><span class="pl-c1">Result</span>(<span class="pl-s1">column</span>=<span class="pl-s">"order_id"</span>, <span class="pl-s1">property</span>=<span class="pl-s">"orderId"</span>, <span class="pl-s1">jdbcType</span>=<span class="pl-smi">JdbcType</span>.<span class="pl-c1">VARCHAR</span>),
+        <span class="pl-c1">@</span><span class="pl-c1">Result</span>(<span class="pl-s1">column</span>=<span class="pl-s">"create_time"</span>, <span class="pl-s1">property</span>=<span class="pl-s">"createTime"</span>, <span class="pl-s1">jdbcType</span>=<span class="pl-smi">JdbcType</span>.<span class="pl-c1">TIMESTAMP</span>),
+        <span class="pl-c1">@</span><span class="pl-c1">Result</span>(<span class="pl-s1">column</span>=<span class="pl-s">"amount"</span>, <span class="pl-s1">property</span>=<span class="pl-s">"amount"</span>, <span class="pl-s1">jdbcType</span>=<span class="pl-smi">JdbcType</span>.<span class="pl-c1">DECIMAL</span>),
+        <span class="pl-c1">@</span><span class="pl-c1">Result</span>(<span class="pl-s1">column</span>=<span class="pl-s">"order_status"</span>, <span class="pl-s1">property</span>=<span class="pl-s">"orderStatus"</span>, <span class="pl-s1">jdbcType</span>=<span class="pl-smi">JdbcType</span>.<span class="pl-c1">TINYINT</span>)
+    })
+    <span class="pl-smi">Optional</span>&lt;<span class="pl-smi">Order</span>&gt; <span class="pl-en">selectOne</span>(<span class="pl-smi">SelectStatementProvider</span> <span class="pl-s1">selectStatement</span>);
+
+    <span class="pl-c1">@</span><span class="pl-c1">Generated</span>(<span class="pl-s">"org.mybatis.generator.api.MyBatisGenerator"</span>)
+    <span class="pl-c1">@</span><span class="pl-c1">SelectProvider</span>(<span class="pl-s1">type</span>=<span class="pl-smi">SqlProviderAdapter</span>.<span class="pl-k">class</span>, <span class="pl-s1">method</span>=<span class="pl-s">"select"</span>)
+    <span class="pl-c1">@</span><span class="pl-c1">Results</span>(<span class="pl-s1">id</span>=<span class="pl-s">"OrderResult"</span>, <span class="pl-s1">value</span> = {
+        <span class="pl-c1">@</span><span class="pl-c1">Result</span>(<span class="pl-s1">column</span>=<span class="pl-s">"id"</span>, <span class="pl-s1">property</span>=<span class="pl-s">"id"</span>, <span class="pl-s1">jdbcType</span>=<span class="pl-smi">JdbcType</span>.<span class="pl-c1">BIGINT</span>, <span class="pl-s1">id</span>=<span class="pl-c1">true</span>),
+        <span class="pl-c1">@</span><span class="pl-c1">Result</span>(<span class="pl-s1">column</span>=<span class="pl-s">"order_id"</span>, <span class="pl-s1">property</span>=<span class="pl-s">"orderId"</span>, <span class="pl-s1">jdbcType</span>=<span class="pl-smi">JdbcType</span>.<span class="pl-c1">VARCHAR</span>),
+        <span class="pl-c1">@</span><span class="pl-c1">Result</span>(<span class="pl-s1">column</span>=<span class="pl-s">"create_time"</span>, <span class="pl-s1">property</span>=<span class="pl-s">"createTime"</span>, <span class="pl-s1">jdbcType</span>=<span class="pl-smi">JdbcType</span>.<span class="pl-c1">TIMESTAMP</span>),
+        <span class="pl-c1">@</span><span class="pl-c1">Result</span>(<span class="pl-s1">column</span>=<span class="pl-s">"amount"</span>, <span class="pl-s1">property</span>=<span class="pl-s">"amount"</span>, <span class="pl-s1">jdbcType</span>=<span class="pl-smi">JdbcType</span>.<span class="pl-c1">DECIMAL</span>),
+        <span class="pl-c1">@</span><span class="pl-c1">Result</span>(<span class="pl-s1">column</span>=<span class="pl-s">"order_status"</span>, <span class="pl-s1">property</span>=<span class="pl-s">"orderStatus"</span>, <span class="pl-s1">jdbcType</span>=<span class="pl-smi">JdbcType</span>.<span class="pl-c1">TINYINT</span>)
+    })
+    <span class="pl-smi">List</span>&lt;<span class="pl-smi">Order</span>&gt; <span class="pl-en">selectMany</span>(<span class="pl-smi">SelectStatementProvider</span> <span class="pl-s1">selectStatement</span>);
+
+    <span class="pl-c1">@</span><span class="pl-c1">Generated</span>(<span class="pl-s">"org.mybatis.generator.api.MyBatisGenerator"</span>)
+    <span class="pl-c1">@</span><span class="pl-c1">UpdateProvider</span>(<span class="pl-s1">type</span>=<span class="pl-smi">SqlProviderAdapter</span>.<span class="pl-k">class</span>, <span class="pl-s1">method</span>=<span class="pl-s">"update"</span>)
+    <span class="pl-smi">int</span> <span class="pl-en">update</span>(<span class="pl-smi">UpdateStatementProvider</span> <span class="pl-s1">updateStatement</span>);
+
+    <span class="pl-c1">@</span><span class="pl-c1">Generated</span>(<span class="pl-s">"org.mybatis.generator.api.MyBatisGenerator"</span>)
+    <span class="pl-k">default</span> <span class="pl-smi">long</span> <span class="pl-en">count</span>(<span class="pl-smi">CountDSLCompleter</span> <span class="pl-s1">completer</span>) {
+        <span class="pl-k">return</span> <span class="pl-smi">MyBatis3Utils</span>.<span class="pl-en">countFrom</span>(<span class="pl-smi">this</span>::<span class="pl-s1">count</span>, <span class="pl-s1">order</span>, <span class="pl-s1">completer</span>);
+    }
+
+    <span class="pl-c1">@</span><span class="pl-c1">Generated</span>(<span class="pl-s">"org.mybatis.generator.api.MyBatisGenerator"</span>)
+    <span class="pl-k">default</span> <span class="pl-smi">int</span> <span class="pl-en">delete</span>(<span class="pl-smi">DeleteDSLCompleter</span> <span class="pl-s1">completer</span>) {
+        <span class="pl-k">return</span> <span class="pl-smi">MyBatis3Utils</span>.<span class="pl-en">deleteFrom</span>(<span class="pl-smi">this</span>::<span class="pl-s1">delete</span>, <span class="pl-s1">order</span>, <span class="pl-s1">completer</span>);
+    }
+
+    <span class="pl-c1">@</span><span class="pl-c1">Generated</span>(<span class="pl-s">"org.mybatis.generator.api.MyBatisGenerator"</span>)
+    <span class="pl-k">default</span> <span class="pl-smi">int</span> <span class="pl-en">deleteByPrimaryKey</span>(<span class="pl-smi">Long</span> <span class="pl-s1">id_</span>) {
+        <span class="pl-k">return</span> <span class="pl-en">delete</span>(<span class="pl-s1">c</span> -&gt; 
+            <span class="pl-s1">c</span>.<span class="pl-en">where</span>(<span class="pl-s1">id</span>, <span class="pl-en">isEqualTo</span>(<span class="pl-s1">id_</span>))
+        );
+    }
+
+    <span class="pl-c1">@</span><span class="pl-c1">Generated</span>(<span class="pl-s">"org.mybatis.generator.api.MyBatisGenerator"</span>)
+    <span class="pl-k">default</span> <span class="pl-smi">int</span> <span class="pl-en">insert</span>(<span class="pl-smi">Order</span> <span class="pl-s1">record</span>) {
+        <span class="pl-k">return</span> <span class="pl-smi">MyBatis3Utils</span>.<span class="pl-en">insert</span>(<span class="pl-smi">this</span>::<span class="pl-s1">insert</span>, <span class="pl-s1">record</span>, <span class="pl-s1">order</span>, <span class="pl-s1">c</span> -&gt;
+            <span class="pl-s1">c</span>.<span class="pl-en">map</span>(<span class="pl-s1">id</span>).<span class="pl-en">toProperty</span>(<span class="pl-s">"id"</span>)
+            .<span class="pl-en">map</span>(<span class="pl-s1">orderId</span>).<span class="pl-en">toProperty</span>(<span class="pl-s">"orderId"</span>)
+            .<span class="pl-en">map</span>(<span class="pl-s1">createTime</span>).<span class="pl-en">toProperty</span>(<span class="pl-s">"createTime"</span>)
+            .<span class="pl-en">map</span>(<span class="pl-s1">amount</span>).<span class="pl-en">toProperty</span>(<span class="pl-s">"amount"</span>)
+            .<span class="pl-en">map</span>(<span class="pl-s1">orderStatus</span>).<span class="pl-en">toProperty</span>(<span class="pl-s">"orderStatus"</span>)
+        );
+    }
+
+    <span class="pl-c1">@</span><span class="pl-c1">Generated</span>(<span class="pl-s">"org.mybatis.generator.api.MyBatisGenerator"</span>)
+    <span class="pl-k">default</span> <span class="pl-smi">int</span> <span class="pl-en">insertSelective</span>(<span class="pl-smi">Order</span> <span class="pl-s1">record</span>) {
+        <span class="pl-k">return</span> <span class="pl-smi">MyBatis3Utils</span>.<span class="pl-en">insert</span>(<span class="pl-smi">this</span>::<span class="pl-s1">insert</span>, <span class="pl-s1">record</span>, <span class="pl-s1">order</span>, <span class="pl-s1">c</span> -&gt;
+            <span class="pl-s1">c</span>.<span class="pl-en">map</span>(<span class="pl-s1">id</span>).<span class="pl-en">toProperty</span>(<span class="pl-s">"id"</span>)
+            .<span class="pl-en">map</span>(<span class="pl-s1">orderId</span>).<span class="pl-en">toPropertyWhenPresent</span>(<span class="pl-s">"orderId"</span>, <span class="pl-s1">record</span>::<span class="pl-s1">getOrderId</span>)
+            .<span class="pl-en">map</span>(<span class="pl-s1">createTime</span>).<span class="pl-en">toPropertyWhenPresent</span>(<span class="pl-s">"createTime"</span>, <span class="pl-s1">record</span>::<span class="pl-s1">getCreateTime</span>)
+            .<span class="pl-en">map</span>(<span class="pl-s1">amount</span>).<span class="pl-en">toPropertyWhenPresent</span>(<span class="pl-s">"amount"</span>, <span class="pl-s1">record</span>::<span class="pl-s1">getAmount</span>)
+            .<span class="pl-en">map</span>(<span class="pl-s1">orderStatus</span>).<span class="pl-en">toPropertyWhenPresent</span>(<span class="pl-s">"orderStatus"</span>, <span class="pl-s1">record</span>::<span class="pl-s1">getOrderStatus</span>)
+        );
+    }
+
+    <span class="pl-c1">@</span><span class="pl-c1">Generated</span>(<span class="pl-s">"org.mybatis.generator.api.MyBatisGenerator"</span>)
+    <span class="pl-k">default</span> <span class="pl-smi">Optional</span>&lt;<span class="pl-smi">Order</span>&gt; <span class="pl-en">selectOne</span>(<span class="pl-smi">SelectDSLCompleter</span> <span class="pl-s1">completer</span>) {
+        <span class="pl-k">return</span> <span class="pl-smi">MyBatis3Utils</span>.<span class="pl-en">selectOne</span>(<span class="pl-smi">this</span>::<span class="pl-s1">selectOne</span>, <span class="pl-s1">selectList</span>, <span class="pl-s1">order</span>, <span class="pl-s1">completer</span>);
+    }
+
+    <span class="pl-c1">@</span><span class="pl-c1">Generated</span>(<span class="pl-s">"org.mybatis.generator.api.MyBatisGenerator"</span>)
+    <span class="pl-k">default</span> <span class="pl-smi">List</span>&lt;<span class="pl-smi">Order</span>&gt; <span class="pl-en">select</span>(<span class="pl-smi">SelectDSLCompleter</span> <span class="pl-s1">completer</span>) {
+        <span class="pl-k">return</span> <span class="pl-smi">MyBatis3Utils</span>.<span class="pl-en">selectList</span>(<span class="pl-smi">this</span>::<span class="pl-s1">selectMany</span>, <span class="pl-s1">selectList</span>, <span class="pl-s1">order</span>, <span class="pl-s1">completer</span>);
+    }
+
+    <span class="pl-c1">@</span><span class="pl-c1">Generated</span>(<span class="pl-s">"org.mybatis.generator.api.MyBatisGenerator"</span>)
+    <span class="pl-k">default</span> <span class="pl-smi">List</span>&lt;<span class="pl-smi">Order</span>&gt; <span class="pl-en">selectDistinct</span>(<span class="pl-smi">SelectDSLCompleter</span> <span class="pl-s1">completer</span>) {
+        <span class="pl-k">return</span> <span class="pl-smi">MyBatis3Utils</span>.<span class="pl-en">selectDistinct</span>(<span class="pl-smi">this</span>::<span class="pl-s1">selectMany</span>, <span class="pl-s1">selectList</span>, <span class="pl-s1">order</span>, <span class="pl-s1">completer</span>);
+    }
+
+    <span class="pl-c1">@</span><span class="pl-c1">Generated</span>(<span class="pl-s">"org.mybatis.generator.api.MyBatisGenerator"</span>)
+    <span class="pl-k">default</span> <span class="pl-smi">Optional</span>&lt;<span class="pl-smi">Order</span>&gt; <span class="pl-en">selectByPrimaryKey</span>(<span class="pl-smi">Long</span> <span class="pl-s1">id_</span>) {
+        <span class="pl-k">return</span> <span class="pl-en">selectOne</span>(<span class="pl-s1">c</span> -&gt;
+            <span class="pl-s1">c</span>.<span class="pl-en">where</span>(<span class="pl-s1">id</span>, <span class="pl-en">isEqualTo</span>(<span class="pl-s1">id_</span>))
+        );
+    }
+
+    <span class="pl-c1">@</span><span class="pl-c1">Generated</span>(<span class="pl-s">"org.mybatis.generator.api.MyBatisGenerator"</span>)
+    <span class="pl-k">default</span> <span class="pl-smi">int</span> <span class="pl-en">update</span>(<span class="pl-smi">UpdateDSLCompleter</span> <span class="pl-s1">completer</span>) {
+        <span class="pl-k">return</span> <span class="pl-smi">MyBatis3Utils</span>.<span class="pl-en">update</span>(<span class="pl-smi">this</span>::<span class="pl-s1">update</span>, <span class="pl-s1">order</span>, <span class="pl-s1">completer</span>);
+    }
+
+    <span class="pl-c1">@</span><span class="pl-c1">Generated</span>(<span class="pl-s">"org.mybatis.generator.api.MyBatisGenerator"</span>)
+    <span class="pl-k">static</span> <span class="pl-smi">UpdateDSL</span>&lt;<span class="pl-smi">UpdateModel</span>&gt; <span class="pl-en">updateAllColumns</span>(<span class="pl-smi">Order</span> <span class="pl-s1">record</span>, <span class="pl-smi">UpdateDSL</span>&lt;<span class="pl-smi">UpdateModel</span>&gt; <span class="pl-s1">dsl</span>) {
+        <span class="pl-k">return</span> <span class="pl-s1">dsl</span>.<span class="pl-en">set</span>(<span class="pl-s1">id</span>).<span class="pl-en">equalTo</span>(<span class="pl-s1">record</span>::<span class="pl-s1">getId</span>)
+                .<span class="pl-en">set</span>(<span class="pl-s1">orderId</span>).<span class="pl-en">equalTo</span>(<span class="pl-s1">record</span>::<span class="pl-s1">getOrderId</span>)
+                .<span class="pl-en">set</span>(<span class="pl-s1">createTime</span>).<span class="pl-en">equalTo</span>(<span class="pl-s1">record</span>::<span class="pl-s1">getCreateTime</span>)
+                .<span class="pl-en">set</span>(<span class="pl-s1">amount</span>).<span class="pl-en">equalTo</span>(<span class="pl-s1">record</span>::<span class="pl-s1">getAmount</span>)
+                .<span class="pl-en">set</span>(<span class="pl-s1">orderStatus</span>).<span class="pl-en">equalTo</span>(<span class="pl-s1">record</span>::<span class="pl-s1">getOrderStatus</span>);
+    }
+
+    <span class="pl-c1">@</span><span class="pl-c1">Generated</span>(<span class="pl-s">"org.mybatis.generator.api.MyBatisGenerator"</span>)
+    <span class="pl-k">static</span> <span class="pl-smi">UpdateDSL</span>&lt;<span class="pl-smi">UpdateModel</span>&gt; <span class="pl-en">updateSelectiveColumns</span>(<span class="pl-smi">Order</span> <span class="pl-s1">record</span>, <span class="pl-smi">UpdateDSL</span>&lt;<span class="pl-smi">UpdateModel</span>&gt; <span class="pl-s1">dsl</span>) {
+        <span class="pl-k">return</span> <span class="pl-s1">dsl</span>.<span class="pl-en">set</span>(<span class="pl-s1">id</span>).<span class="pl-en">equalToWhenPresent</span>(<span class="pl-s1">record</span>::<span class="pl-s1">getId</span>)
+                .<span class="pl-en">set</span>(<span class="pl-s1">orderId</span>).<span class="pl-en">equalToWhenPresent</span>(<span class="pl-s1">record</span>::<span class="pl-s1">getOrderId</span>)
+                .<span class="pl-en">set</span>(<span class="pl-s1">createTime</span>).<span class="pl-en">equalToWhenPresent</span>(<span class="pl-s1">record</span>::<span class="pl-s1">getCreateTime</span>)
+                .<span class="pl-en">set</span>(<span class="pl-s1">amount</span>).<span class="pl-en">equalToWhenPresent</span>(<span class="pl-s1">record</span>::<span class="pl-s1">getAmount</span>)
+                .<span class="pl-en">set</span>(<span class="pl-s1">orderStatus</span>).<span class="pl-en">equalToWhenPresent</span>(<span class="pl-s1">record</span>::<span class="pl-s1">getOrderStatus</span>);
+    }
+
+    <span class="pl-c1">@</span><span class="pl-c1">Generated</span>(<span class="pl-s">"org.mybatis.generator.api.MyBatisGenerator"</span>)
+    <span class="pl-k">default</span> <span class="pl-smi">int</span> <span class="pl-en">updateByPrimaryKey</span>(<span class="pl-smi">Order</span> <span class="pl-s1">record</span>) {
+        <span class="pl-k">return</span> <span class="pl-en">update</span>(<span class="pl-s1">c</span> -&gt;
+            <span class="pl-s1">c</span>.<span class="pl-en">set</span>(<span class="pl-s1">orderId</span>).<span class="pl-en">equalTo</span>(<span class="pl-s1">record</span>::<span class="pl-s1">getOrderId</span>)
+            .<span class="pl-en">set</span>(<span class="pl-s1">createTime</span>).<span class="pl-en">equalTo</span>(<span class="pl-s1">record</span>::<span class="pl-s1">getCreateTime</span>)
+            .<span class="pl-en">set</span>(<span class="pl-s1">amount</span>).<span class="pl-en">equalTo</span>(<span class="pl-s1">record</span>::<span class="pl-s1">getAmount</span>)
+            .<span class="pl-en">set</span>(<span class="pl-s1">orderStatus</span>).<span class="pl-en">equalTo</span>(<span class="pl-s1">record</span>::<span class="pl-s1">getOrderStatus</span>)
+            .<span class="pl-en">where</span>(<span class="pl-s1">id</span>, <span class="pl-en">isEqualTo</span>(<span class="pl-s1">record</span>::<span class="pl-s1">getId</span>))
+        );
+    }
+
+    <span class="pl-c1">@</span><span class="pl-c1">Generated</span>(<span class="pl-s">"org.mybatis.generator.api.MyBatisGenerator"</span>)
+    <span class="pl-k">default</span> <span class="pl-smi">int</span> <span class="pl-en">updateByPrimaryKeySelective</span>(<span class="pl-smi">Order</span> <span class="pl-s1">record</span>) {
+        <span class="pl-k">return</span> <span class="pl-en">update</span>(<span class="pl-s1">c</span> -&gt;
+            <span class="pl-s1">c</span>.<span class="pl-en">set</span>(<span class="pl-s1">orderId</span>).<span class="pl-en">equalToWhenPresent</span>(<span class="pl-s1">record</span>::<span class="pl-s1">getOrderId</span>)
+            .<span class="pl-en">set</span>(<span class="pl-s1">createTime</span>).<span class="pl-en">equalToWhenPresent</span>(<span class="pl-s1">record</span>::<span class="pl-s1">getCreateTime</span>)
+            .<span class="pl-en">set</span>(<span class="pl-s1">amount</span>).<span class="pl-en">equalToWhenPresent</span>(<span class="pl-s1">record</span>::<span class="pl-s1">getAmount</span>)
+            .<span class="pl-en">set</span>(<span class="pl-s1">orderStatus</span>).<span class="pl-en">equalToWhenPresent</span>(<span class="pl-s1">record</span>::<span class="pl-s1">getOrderStatus</span>)
+            .<span class="pl-en">where</span>(<span class="pl-s1">id</span>, <span class="pl-en">isEqualTo</span>(<span class="pl-s1">record</span>::<span class="pl-s1">getId</span>))
+        );
+    }
+}</pre></div>
+<h3>极简XML映射文件<a href="#%E6%9E%81%E7%AE%80xml%E6%98%A0%E5%B0%84%E6%96%87%E4%BB%B6">#</a></h3>
+<p>极简<code class="notranslate">XML</code>映射文件生成只需要简单修改配置文件：</p>
+<div class="highlight highlight-text-xml"><pre class="notranslate">&lt;<span class="pl-ent">context</span> <span class="pl-e">id</span>=<span class="pl-s"><span class="pl-pds">"</span>default<span class="pl-pds">"</span></span> <span class="pl-e">targetRuntime</span>=<span class="pl-s"><span class="pl-pds">"</span>MyBatis3Simple<span class="pl-pds">"</span></span>&gt;
+...
+
+&lt;<span class="pl-ent">javaClientGenerator</span> <span class="pl-e">type</span>=<span class="pl-s"><span class="pl-pds">"</span>XMLMAPPER<span class="pl-pds">"</span></span>
+...</pre></div>
+<p>生成三个文件：</p>
+<div class="highlight highlight-source-java"><pre class="notranslate"><span class="pl-c">// club.throwable.entity</span>
+<span class="pl-k">public</span> <span class="pl-k">class</span> <span class="pl-smi">Order</span> {
+    <span class="pl-k">private</span> <span class="pl-smi">Long</span> <span class="pl-s1">id</span>;
+
+    <span class="pl-k">private</span> <span class="pl-smi">String</span> <span class="pl-s1">orderId</span>;
+
+    <span class="pl-k">private</span> <span class="pl-smi">Date</span> <span class="pl-s1">createTime</span>;
+
+    <span class="pl-k">private</span> <span class="pl-smi">BigDecimal</span> <span class="pl-s1">amount</span>;
+
+    <span class="pl-k">private</span> <span class="pl-smi">Byte</span> <span class="pl-s1">orderStatus</span>;
+
+    <span class="pl-k">public</span> <span class="pl-smi">Long</span> <span class="pl-en">getId</span>() {
+        <span class="pl-k">return</span> <span class="pl-s1">id</span>;
+    }
+
+    <span class="pl-k">public</span> <span class="pl-smi">void</span> <span class="pl-en">setId</span>(<span class="pl-smi">Long</span> <span class="pl-s1">id</span>) {
+        <span class="pl-smi">this</span>.<span class="pl-s1">id</span> = <span class="pl-s1">id</span>;
+    }
+
+    <span class="pl-k">public</span> <span class="pl-smi">String</span> <span class="pl-en">getOrderId</span>() {
+        <span class="pl-k">return</span> <span class="pl-s1">orderId</span>;
+    }
+
+    <span class="pl-k">public</span> <span class="pl-smi">void</span> <span class="pl-en">setOrderId</span>(<span class="pl-smi">String</span> <span class="pl-s1">orderId</span>) {
+        <span class="pl-smi">this</span>.<span class="pl-s1">orderId</span> = <span class="pl-s1">orderId</span>;
+    }
+
+    <span class="pl-k">public</span> <span class="pl-smi">Date</span> <span class="pl-en">getCreateTime</span>() {
+        <span class="pl-k">return</span> <span class="pl-s1">createTime</span>;
+    }
+
+    <span class="pl-k">public</span> <span class="pl-smi">void</span> <span class="pl-en">setCreateTime</span>(<span class="pl-smi">Date</span> <span class="pl-s1">createTime</span>) {
+        <span class="pl-smi">this</span>.<span class="pl-s1">createTime</span> = <span class="pl-s1">createTime</span>;
+    }
+
+    <span class="pl-k">public</span> <span class="pl-smi">BigDecimal</span> <span class="pl-en">getAmount</span>() {
+        <span class="pl-k">return</span> <span class="pl-s1">amount</span>;
+    }
+
+    <span class="pl-k">public</span> <span class="pl-smi">void</span> <span class="pl-en">setAmount</span>(<span class="pl-smi">BigDecimal</span> <span class="pl-s1">amount</span>) {
+        <span class="pl-smi">this</span>.<span class="pl-s1">amount</span> = <span class="pl-s1">amount</span>;
+    }
+
+    <span class="pl-k">public</span> <span class="pl-smi">Byte</span> <span class="pl-en">getOrderStatus</span>() {
+        <span class="pl-k">return</span> <span class="pl-s1">orderStatus</span>;
+    }
+
+    <span class="pl-k">public</span> <span class="pl-smi">void</span> <span class="pl-en">setOrderStatus</span>(<span class="pl-smi">Byte</span> <span class="pl-s1">orderStatus</span>) {
+        <span class="pl-smi">this</span>.<span class="pl-s1">orderStatus</span> = <span class="pl-s1">orderStatus</span>;
+    }
+}
+
+<span class="pl-c">// club.throwable.dao</span>
+<span class="pl-k">public</span> <span class="pl-k">interface</span> <span class="pl-smi">OrderMapper</span> {
+    <span class="pl-smi">int</span> <span class="pl-en">deleteByPrimaryKey</span>(<span class="pl-smi">Long</span> <span class="pl-s1">id</span>);
+
+    <span class="pl-smi">int</span> <span class="pl-en">insert</span>(<span class="pl-smi">Order</span> <span class="pl-s1">record</span>);
+
+    <span class="pl-smi">Order</span> <span class="pl-en">selectByPrimaryKey</span>(<span class="pl-smi">Long</span> <span class="pl-s1">id</span>);
+
+    <span class="pl-smi">List</span>&lt;<span class="pl-smi">Order</span>&gt; <span class="pl-en">selectAll</span>();
+
+    <span class="pl-smi">int</span> <span class="pl-en">updateByPrimaryKey</span>(<span class="pl-smi">Order</span> <span class="pl-s1">record</span>);
+}
+
+<span class="pl-c">// mappings</span><span class="pl-s1"></span>
+&lt;?<span class="pl-s1">xml</span> <span class="pl-s1">version</span>=<span class="pl-s">"1.0"</span> <span class="pl-s1">encoding</span>=<span class="pl-s">"UTF-8"</span>?&gt;
+&lt;!<span class="pl-smi">DOCTYPE</span> <span class="pl-s1">mapper</span> <span class="pl-c1">PUBLIC</span> <span class="pl-s">"-//mybatis.org//DTD Mapper 3.0//EN"</span> "<span class="pl-s1">http</span>:<span class="pl-c">//mybatis.org/dtd/mybatis-3-mapper.dtd"&gt;</span>
+&lt;<span class="pl-smi">mapper</span> <span class="pl-s1">namespace</span>=<span class="pl-s">"club.throwable.dao.OrderMapper"</span>&gt;
+    &lt;<span class="pl-smi">resultMap</span> <span class="pl-s1">id</span>=<span class="pl-s">"BaseResultMap"</span> <span class="pl-s1">type</span>=<span class="pl-s">"club.throwable.entity.Order"</span>&gt;
+        &lt;<span class="pl-smi">id</span> <span class="pl-s1">column</span>=<span class="pl-s">"id"</span> <span class="pl-s1">jdbcType</span>=<span class="pl-s">"BIGINT"</span> <span class="pl-s1">property</span>=<span class="pl-s">"id"</span>/&gt;
+        &lt;<span class="pl-smi">result</span> <span class="pl-s1">column</span>=<span class="pl-s">"order_id"</span> <span class="pl-s1">jdbcType</span>=<span class="pl-s">"VARCHAR"</span> <span class="pl-s1">property</span>=<span class="pl-s">"orderId"</span>/&gt;
+        &lt;<span class="pl-smi">result</span> <span class="pl-s1">column</span>=<span class="pl-s">"create_time"</span> <span class="pl-s1">jdbcType</span>=<span class="pl-s">"TIMESTAMP"</span> <span class="pl-s1">property</span>=<span class="pl-s">"createTime"</span>/&gt;
+        &lt;<span class="pl-smi">result</span> <span class="pl-s1">column</span>=<span class="pl-s">"amount"</span> <span class="pl-s1">jdbcType</span>=<span class="pl-s">"DECIMAL"</span> <span class="pl-s1">property</span>=<span class="pl-s">"amount"</span>/&gt;
+        &lt;<span class="pl-smi">result</span> <span class="pl-s1">column</span>=<span class="pl-s">"order_status"</span> <span class="pl-s1">jdbcType</span>=<span class="pl-s">"TINYINT"</span> <span class="pl-s1">property</span>=<span class="pl-s">"orderStatus"</span>/&gt;
+    &lt;/<span class="pl-s1">resultMap</span>&gt;
+    &lt;<span class="pl-smi">delete</span> <span class="pl-s1">id</span>=<span class="pl-s">"deleteByPrimaryKey"</span> <span class="pl-s1">parameterType</span>=<span class="pl-s">"java.lang.Long"</span>&gt;
+        <span class="pl-smi">delete</span>
+        <span class="pl-s1">from</span> <span class="pl-s1">t_order</span>
+        <span class="pl-s1">where</span> <span class="pl-s1">id</span> = #{<span class="pl-s1">id</span>,<span class="pl-s1">jdbcType</span>=<span class="pl-c1">BIGINT</span>}
+    &lt;/<span class="pl-s1">delete</span>&gt;
+    &lt;<span class="pl-smi">insert</span> <span class="pl-s1">id</span>=<span class="pl-s">"insert"</span> <span class="pl-s1">parameterType</span>=<span class="pl-s">"club.throwable.entity.Order"</span>&gt;
+        &lt;<span class="pl-smi">selectKey</span> <span class="pl-s1">keyProperty</span>=<span class="pl-s">"id"</span> <span class="pl-s1">order</span>=<span class="pl-s">"AFTER"</span> <span class="pl-s1">resultType</span>=<span class="pl-s">"java.lang.Long"</span>&gt;
+            <span class="pl-smi">SELECT</span> <span class="pl-en">LAST_INSERT_ID</span>()
+        &lt;/<span class="pl-s1">selectKey</span>&gt;
+        <span class="pl-smi">insert</span> <span class="pl-s1">into</span> <span class="pl-en">t_order</span> (<span class="pl-s1">order_id</span>, <span class="pl-s1">create_time</span>, <span class="pl-s1">amount</span>,
+        <span class="pl-s1">order_status</span>)
+        <span class="pl-en">values</span> (#{<span class="pl-s1">orderId</span>,<span class="pl-s1">jdbcType</span>=<span class="pl-c1">VARCHAR</span>}, #{<span class="pl-s1">createTime</span>,<span class="pl-s1">jdbcType</span>=<span class="pl-c1">TIMESTAMP</span>}, #{<span class="pl-s1">amount</span>,<span class="pl-s1">jdbcType</span>=<span class="pl-c1">DECIMAL</span>},
+        #{<span class="pl-s1">orderStatus</span>,<span class="pl-s1">jdbcType</span>=<span class="pl-c1">TINYINT</span>})
+    &lt;/<span class="pl-s1">insert</span>&gt;
+    &lt;<span class="pl-smi">update</span> <span class="pl-s1">id</span>=<span class="pl-s">"updateByPrimaryKey"</span> <span class="pl-s1">parameterType</span>=<span class="pl-s">"club.throwable.entity.Order"</span>&gt;
+        <span class="pl-smi">update</span> <span class="pl-s1">t_order</span>
+        <span class="pl-smi">set</span> <span class="pl-s1">order_id</span>     = #{<span class="pl-s1">orderId</span>,<span class="pl-s1">jdbcType</span>=<span class="pl-c1">VARCHAR</span>},
+            <span class="pl-s1">create_time</span>  = #{<span class="pl-s1">createTime</span>,<span class="pl-s1">jdbcType</span>=<span class="pl-c1">TIMESTAMP</span>},
+            <span class="pl-s1">amount</span>       = #{<span class="pl-s1">amount</span>,<span class="pl-s1">jdbcType</span>=<span class="pl-c1">DECIMAL</span>},
+            <span class="pl-s1">order_status</span> = #{<span class="pl-s1">orderStatus</span>,<span class="pl-s1">jdbcType</span>=<span class="pl-c1">TINYINT</span>}
+        <span class="pl-s1">where</span> <span class="pl-s1">id</span> = #{<span class="pl-s1">id</span>,<span class="pl-s1">jdbcType</span>=<span class="pl-c1">BIGINT</span>}
+    &lt;/<span class="pl-s1">update</span>&gt;
+    &lt;<span class="pl-smi">select</span> <span class="pl-s1">id</span>=<span class="pl-s">"selectByPrimaryKey"</span> <span class="pl-s1">parameterType</span>=<span class="pl-s">"java.lang.Long"</span> <span class="pl-s1">resultMap</span>=<span class="pl-s">"BaseResultMap"</span>&gt;
+        <span class="pl-smi">select</span> <span class="pl-s1">id</span>, <span class="pl-s1">order_id</span>, <span class="pl-s1">create_time</span>, <span class="pl-s1">amount</span>, <span class="pl-s1">order_status</span>
+        <span class="pl-s1">from</span> <span class="pl-s1">t_order</span>
+        <span class="pl-s1">where</span> <span class="pl-s1">id</span> = #{<span class="pl-s1">id</span>,<span class="pl-s1">jdbcType</span>=<span class="pl-c1">BIGINT</span>}
+    &lt;/<span class="pl-s1">select</span>&gt;
+    &lt;<span class="pl-smi">select</span> <span class="pl-s1">id</span>=<span class="pl-s">"selectAll"</span> <span class="pl-s1">resultMap</span>=<span class="pl-s">"BaseResultMap"</span>&gt;
+        <span class="pl-smi">select</span> <span class="pl-s1">id</span>, <span class="pl-s1">order_id</span>, <span class="pl-s1">create_time</span>, <span class="pl-s1">amount</span>, <span class="pl-s1">order_status</span>
+        <span class="pl-s1">from</span> <span class="pl-s1">t_order</span>
+    &lt;/<span class="pl-s1">select</span>&gt;
+    &lt;<span class="pl-smi">resultMap</span> <span class="pl-s1">id</span>=<span class="pl-s">"BaseResultMap"</span> <span class="pl-s1">type</span>=<span class="pl-s">"club.throwable.entity.Order"</span>&gt;
+        &lt;<span class="pl-smi">id</span> <span class="pl-s1">column</span>=<span class="pl-s">"id"</span> <span class="pl-s1">jdbcType</span>=<span class="pl-s">"BIGINT"</span> <span class="pl-s1">property</span>=<span class="pl-s">"id"</span>/&gt;
+        &lt;<span class="pl-smi">result</span> <span class="pl-s1">column</span>=<span class="pl-s">"order_id"</span> <span class="pl-s1">jdbcType</span>=<span class="pl-s">"VARCHAR"</span> <span class="pl-s1">property</span>=<span class="pl-s">"orderId"</span>/&gt;
+        &lt;<span class="pl-smi">result</span> <span class="pl-s1">column</span>=<span class="pl-s">"create_time"</span> <span class="pl-s1">jdbcType</span>=<span class="pl-s">"TIMESTAMP"</span> <span class="pl-s1">property</span>=<span class="pl-s">"createTime"</span>/&gt;
+        &lt;<span class="pl-smi">result</span> <span class="pl-s1">column</span>=<span class="pl-s">"amount"</span> <span class="pl-s1">jdbcType</span>=<span class="pl-s">"DECIMAL"</span> <span class="pl-s1">property</span>=<span class="pl-s">"amount"</span>/&gt;
+        &lt;<span class="pl-smi">result</span> <span class="pl-s1">column</span>=<span class="pl-s">"order_status"</span> <span class="pl-s1">jdbcType</span>=<span class="pl-s">"TINYINT"</span> <span class="pl-s1">property</span>=<span class="pl-s">"orderStatus"</span>/&gt;
+    &lt;/<span class="pl-s1">resultMap</span>&gt;
+    &lt;<span class="pl-smi">delete</span> <span class="pl-s1">id</span>=<span class="pl-s">"deleteByPrimaryKey"</span> <span class="pl-s1">parameterType</span>=<span class="pl-s">"java.lang.Long"</span>&gt;
+        <span class="pl-smi">delete</span>
+        <span class="pl-s1">from</span> <span class="pl-s1">t_order</span>
+        <span class="pl-s1">where</span> <span class="pl-s1">id</span> = #{<span class="pl-s1">id</span>,<span class="pl-s1">jdbcType</span>=<span class="pl-c1">BIGINT</span>}
+    &lt;/<span class="pl-s1">delete</span>&gt;
+    &lt;<span class="pl-smi">insert</span> <span class="pl-s1">id</span>=<span class="pl-s">"insert"</span> <span class="pl-s1">parameterType</span>=<span class="pl-s">"club.throwable.entity.Order"</span>&gt;
+        &lt;<span class="pl-smi">selectKey</span> <span class="pl-s1">keyProperty</span>=<span class="pl-s">"id"</span> <span class="pl-s1">order</span>=<span class="pl-s">"BEFORE"</span> <span class="pl-s1">resultType</span>=<span class="pl-s">"java.lang.Long"</span>&gt;
+            <span class="pl-smi">SELECT</span> <span class="pl-en">LAST_INSERT_ID</span>()
+        &lt;/<span class="pl-s1">selectKey</span>&gt;
+        <span class="pl-smi">insert</span> <span class="pl-s1">into</span> <span class="pl-en">t_order</span> (<span class="pl-s1">id</span>, <span class="pl-s1">order_id</span>, <span class="pl-s1">create_time</span>,
+        <span class="pl-s1">amount</span>, <span class="pl-s1">order_status</span>)
+        <span class="pl-en">values</span> (#{<span class="pl-s1">id</span>,<span class="pl-s1">jdbcType</span>=<span class="pl-c1">BIGINT</span>}, #{<span class="pl-s1">orderId</span>,<span class="pl-s1">jdbcType</span>=<span class="pl-c1">VARCHAR</span>}, #{<span class="pl-s1">createTime</span>,<span class="pl-s1">jdbcType</span>=<span class="pl-c1">TIMESTAMP</span>},
+        #{<span class="pl-s1">amount</span>,<span class="pl-s1">jdbcType</span>=<span class="pl-c1">DECIMAL</span>}, #{<span class="pl-s1">orderStatus</span>,<span class="pl-s1">jdbcType</span>=<span class="pl-c1">TINYINT</span>})
+    &lt;/<span class="pl-s1">insert</span>&gt;
+    &lt;<span class="pl-smi">update</span> <span class="pl-s1">id</span>=<span class="pl-s">"updateByPrimaryKey"</span> <span class="pl-s1">parameterType</span>=<span class="pl-s">"club.throwable.entity.Order"</span>&gt;
+        <span class="pl-smi">update</span> <span class="pl-s1">t_order</span>
+        <span class="pl-smi">set</span> <span class="pl-s1">order_id</span>     = #{<span class="pl-s1">orderId</span>,<span class="pl-s1">jdbcType</span>=<span class="pl-c1">VARCHAR</span>},
+            <span class="pl-s1">create_time</span>  = #{<span class="pl-s1">createTime</span>,<span class="pl-s1">jdbcType</span>=<span class="pl-c1">TIMESTAMP</span>},
+            <span class="pl-s1">amount</span>       = #{<span class="pl-s1">amount</span>,<span class="pl-s1">jdbcType</span>=<span class="pl-c1">DECIMAL</span>},
+            <span class="pl-s1">order_status</span> = #{<span class="pl-s1">orderStatus</span>,<span class="pl-s1">jdbcType</span>=<span class="pl-c1">TINYINT</span>}
+        <span class="pl-s1">where</span> <span class="pl-s1">id</span> = #{<span class="pl-s1">id</span>,<span class="pl-s1">jdbcType</span>=<span class="pl-c1">BIGINT</span>}
+    &lt;/<span class="pl-s1">update</span>&gt;
+    &lt;<span class="pl-smi">select</span> <span class="pl-s1">id</span>=<span class="pl-s">"selectByPrimaryKey"</span> <span class="pl-s1">parameterType</span>=<span class="pl-s">"java.lang.Long"</span> <span class="pl-s1">resultMap</span>=<span class="pl-s">"BaseResultMap"</span>&gt;
+        <span class="pl-smi">select</span> <span class="pl-s1">id</span>, <span class="pl-s1">order_id</span>, <span class="pl-s1">create_time</span>, <span class="pl-s1">amount</span>, <span class="pl-s1">order_status</span>
+        <span class="pl-s1">from</span> <span class="pl-s1">t_order</span>
+        <span class="pl-s1">where</span> <span class="pl-s1">id</span> = #{<span class="pl-s1">id</span>,<span class="pl-s1">jdbcType</span>=<span class="pl-c1">BIGINT</span>}
+    &lt;/<span class="pl-s1">select</span>&gt;
+    &lt;<span class="pl-smi">select</span> <span class="pl-s1">id</span>=<span class="pl-s">"selectAll"</span> <span class="pl-s1">resultMap</span>=<span class="pl-s">"BaseResultMap"</span>&gt;
+        <span class="pl-smi">select</span> <span class="pl-s1">id</span>, <span class="pl-s1">order_id</span>, <span class="pl-s1">create_time</span>, <span class="pl-s1">amount</span>, <span class="pl-s1">order_status</span>
+        <span class="pl-s1">from</span> <span class="pl-s1">t_order</span>
+    &lt;/<span class="pl-s1">select</span>&gt;
+&lt;/<span class="pl-s1">mapper</span>&gt;</pre></div>
+<h3>编程式自定义类型映射<a href="#%E7%BC%96%E7%A8%8B%E5%BC%8F%E8%87%AA%E5%AE%9A%E4%B9%89%E7%B1%BB%E5%9E%8B%E6%98%A0%E5%B0%84">#</a></h3>
+<p>笔者喜欢把所有的非长整型的数字，统一使用<code class="notranslate">Integer</code>接收，因此需要自定义类型映射。编写映射器如下：</p>
+<div class="highlight highlight-source-java"><pre class="notranslate"><span class="pl-k">public</span> <span class="pl-k">class</span> <span class="pl-smi">DefaultJavaTypeResolver</span> <span class="pl-k">extends</span> <span class="pl-smi">JavaTypeResolverDefaultImpl</span> {
+
+    <span class="pl-k">public</span> <span class="pl-smi">DefaultJavaTypeResolver</span>() {
+        <span class="pl-en">super</span>();
+        <span class="pl-s1">typeMap</span>.<span class="pl-en">put</span>(<span class="pl-smi">Types</span>.<span class="pl-c1">SMALLINT</span>, <span class="pl-k">new</span> <span class="pl-smi">JdbcTypeInformation</span>(<span class="pl-s">"SMALLINT"</span>,
+                <span class="pl-k">new</span> <span class="pl-smi">FullyQualifiedJavaType</span>(<span class="pl-smi">Integer</span>.<span class="pl-k">class</span>.<span class="pl-en">getName</span>())));
+        <span class="pl-s1">typeMap</span>.<span class="pl-en">put</span>(<span class="pl-smi">Types</span>.<span class="pl-c1">TINYINT</span>, <span class="pl-k">new</span> <span class="pl-smi">JdbcTypeInformation</span>(<span class="pl-s">"TINYINT"</span>,
+                <span class="pl-k">new</span> <span class="pl-smi">FullyQualifiedJavaType</span>(<span class="pl-smi">Integer</span>.<span class="pl-k">class</span>.<span class="pl-en">getName</span>())));
+    }
+}</pre></div>
+<p>此时最好使用编程式运行代码生成器，修改<code class="notranslate">XML</code>配置文件：</p>
+<div class="highlight highlight-text-xml"><pre class="notranslate">&lt;<span class="pl-ent">javaTypeResolver</span> <span class="pl-e">type</span>=<span class="pl-s"><span class="pl-pds">"</span>club.throwable.mbg.DefaultJavaTypeResolver<span class="pl-pds">"</span></span>&gt;
+        &lt;<span class="pl-ent">property</span> <span class="pl-e">name</span>=<span class="pl-s"><span class="pl-pds">"</span>forceBigDecimals<span class="pl-pds">"</span></span> <span class="pl-e">value</span>=<span class="pl-s"><span class="pl-pds">"</span>false<span class="pl-pds">"</span></span>/&gt;
+&lt;/<span class="pl-ent">javaTypeResolver</span>&gt;
+...</pre></div>
+<p>运行方法代码如下：</p>
+<div class="highlight highlight-source-java"><pre class="notranslate"><span class="pl-k">public</span> <span class="pl-k">class</span> <span class="pl-smi">Main</span> {
+
+    <span class="pl-k">public</span> <span class="pl-k">static</span> <span class="pl-smi">void</span> <span class="pl-en">main</span>(<span class="pl-smi">String</span>[] <span class="pl-s1">args</span>) <span class="pl-k">throws</span> <span class="pl-smi">Exception</span> {
+        <span class="pl-smi">List</span>&lt;<span class="pl-smi">String</span>&gt; <span class="pl-s1">warnings</span> = <span class="pl-k">new</span> <span class="pl-smi">ArrayList</span>&lt;&gt;();
+        <span class="pl-c">// 如果已经存在生成过的文件是否进行覆盖</span>
+        <span class="pl-smi">boolean</span> <span class="pl-s1">overwrite</span> = <span class="pl-c1">true</span>;
+        <span class="pl-smi">ConfigurationParser</span> <span class="pl-s1">cp</span> = <span class="pl-k">new</span> <span class="pl-smi">ConfigurationParser</span>(<span class="pl-s1">warnings</span>);
+        <span class="pl-smi">Configuration</span> <span class="pl-s1">config</span> = <span class="pl-s1">cp</span>.<span class="pl-en">parseConfiguration</span>(<span class="pl-smi">Main</span>.<span class="pl-k">class</span>.<span class="pl-en">getResourceAsStream</span>(<span class="pl-s">"/generator-configuration.xml"</span>));
+        <span class="pl-smi">DefaultShellCallback</span> <span class="pl-s1">callback</span> = <span class="pl-k">new</span> <span class="pl-smi">DefaultShellCallback</span>(<span class="pl-s1">overwrite</span>);
+        <span class="pl-smi">MyBatisGenerator</span> <span class="pl-s1">generator</span> = <span class="pl-k">new</span> <span class="pl-smi">MyBatisGenerator</span>(<span class="pl-s1">config</span>, <span class="pl-s1">callback</span>, <span class="pl-s1">warnings</span>);
+        <span class="pl-s1">generator</span>.<span class="pl-en">generate</span>(<span class="pl-c1">null</span>);
+    }
+}</pre></div>
+<p>数据库的<code class="notranslate">order_status</code>是<code class="notranslate">TINYINT</code>类型，生成出来的文件中的<code class="notranslate">orderStatus</code>字段全部替换使用<code class="notranslate">Integer</code>类型定义。</p>
+<h2>小结<a href="#%E5%B0%8F%E7%BB%93">#</a></h2>
+<p>本文相对详尽地介绍了<code class="notranslate">Mybatis Generator</code>的使用方式，具体分析了<code class="notranslate">XML</code>配置文件中主要标签以及标签属性的功能。因为<code class="notranslate">Mybatis</code>在<code class="notranslate">Java</code>的<code class="notranslate">ORM</code>框架体系中还会有一段很长的时间处于主流地位，了解<code class="notranslate">Mybatis Generator</code>可以简化<code class="notranslate">CRUD</code>方法模板代码、实体以及<code class="notranslate">Mapper</code>接口代码生成，从而解放大量生产力。<code class="notranslate">Mybatis Generator</code>有不少第三方的扩展，例如<code class="notranslate">tk.mapper</code>或者<code class="notranslate">mybatis-plus</code>自身的扩展，可能附加的功能不一样，但是基本的使用是一致的。</p>
+<p>参考资料：</p>
+<ul>
+<li><a href="http://mybatis.org/generator/index.html" rel="nofollow">MyBatis Generator</a></li>
+</ul>
+<h2>原文链接<a href="#%E5%8E%9F%E6%96%87%E9%93%BE%E6%8E%A5">#</a></h2>
+<ul>
+<li>Github Page：<a href="http://throwable.club/2019/12/16/mybatis-generator-usage" rel="nofollow">http://throwable.club/2019/12/16/mybatis-generator-usage</a></li>
+<li>Coding Page：<a href="http://throwable.coding.me/2019/12/16/mybatis-generator-usage" rel="nofollow">http://throwable.coding.me/2019/12/16/mybatis-generator-usage</a></li>
+</ul>
+<p>（本文完 c-5-d e-a-20191216 1:00）</p></div>
+<div style="font-size:small;margin-top:8px;float:right;"></div>
+<button class="btn btn-block" type="button" onclick="openComments()" id="cmButton">评论</button>
+<div class="comments" id="comments"></div>
+</div>
+    <div id="footer">Copyright © <span id="year"></span><a href="https://yakun4566.github.io"> 小孩不黑 </a>
+<p>
+<span id="runday"></span>Powered by <a href="https://meekdai.com/Gmeek.html" target="_blank">Gmeek</a>
+</p>
+
+<script>
+if(""!=""){
+    var now=new Date();
+    var startSite=new Date("");
+    var diff=now.getTime()-startSite.getTime();
+    var diffDay=Math.floor(diff/(1000*60*60*24));
+    document.getElementById("year").innerHTML=now.getFullYear();
+    if(""!=""){document.getElementById("runday").innerHTML=" • "+"网站运行"+diffDay+"天"+" • ";}
+    else{document.getElementById("runday").innerHTML="网站运行"+diffDay+"天"+" • ";}
+}
+</script>
+</div>
+</body>
+<script>
+var IconList={'sun': 'M8 10.5a2.5 2.5 0 100-5 2.5 2.5 0 000 5zM8 12a4 4 0 100-8 4 4 0 000 8zM8 0a.75.75 0 01.75.75v1.5a.75.75 0 01-1.5 0V.75A.75.75 0 018 0zm0 13a.75.75 0 01.75.75v1.5a.75.75 0 01-1.5 0v-1.5A.75.75 0 018 13zM2.343 2.343a.75.75 0 011.061 0l1.06 1.061a.75.75 0 01-1.06 1.06l-1.06-1.06a.75.75 0 010-1.06zm9.193 9.193a.75.75 0 011.06 0l1.061 1.06a.75.75 0 01-1.06 1.061l-1.061-1.06a.75.75 0 010-1.061zM16 8a.75.75 0 01-.75.75h-1.5a.75.75 0 010-1.5h1.5A.75.75 0 0116 8zM3 8a.75.75 0 01-.75.75H.75a.75.75 0 010-1.5h1.5A.75.75 0 013 8zm10.657-5.657a.75.75 0 010 1.061l-1.061 1.06a.75.75 0 11-1.06-1.06l1.06-1.06a.75.75 0 011.06 0zm-9.193 9.193a.75.75 0 010 1.06l-1.06 1.061a.75.75 0 11-1.061-1.06l1.06-1.061a.75.75 0 011.061 0z', 'moon': 'M9.598 1.591a.75.75 0 01.785-.175 7 7 0 11-8.967 8.967.75.75 0 01.961-.96 5.5 5.5 0 007.046-7.046.75.75 0 01.175-.786zm1.616 1.945a7 7 0 01-7.678 7.678 5.5 5.5 0 107.678-7.678z', 'sync': 'M1.705 8.005a.75.75 0 0 1 .834.656 5.5 5.5 0 0 0 9.592 2.97l-1.204-1.204a.25.25 0 0 1 .177-.427h3.646a.25.25 0 0 1 .25.25v3.646a.25.25 0 0 1-.427.177l-1.38-1.38A7.002 7.002 0 0 1 1.05 8.84a.75.75 0 0 1 .656-.834ZM8 2.5a5.487 5.487 0 0 0-4.131 1.869l1.204 1.204A.25.25 0 0 1 4.896 6H1.25A.25.25 0 0 1 1 5.75V2.104a.25.25 0 0 1 .427-.177l1.38 1.38A7.002 7.002 0 0 1 14.95 7.16a.75.75 0 0 1-1.49.178A5.5 5.5 0 0 0 8 2.5Z', 'home': 'M6.906.664a1.749 1.749 0 0 1 2.187 0l5.25 4.2c.415.332.657.835.657 1.367v7.019A1.75 1.75 0 0 1 13.25 15h-3.5a.75.75 0 0 1-.75-.75V9H7v5.25a.75.75 0 0 1-.75.75h-3.5A1.75 1.75 0 0 1 1 13.25V6.23c0-.531.242-1.034.657-1.366l5.25-4.2Zm1.25 1.171a.25.25 0 0 0-.312 0l-5.25 4.2a.25.25 0 0 0-.094.196v7.019c0 .138.112.25.25.25H5.5V8.25a.75.75 0 0 1 .75-.75h3.5a.75.75 0 0 1 .75.75v5.25h2.75a.25.25 0 0 0 .25-.25V6.23a.25.25 0 0 0-.094-.195Z', 'github': 'M8 0c4.42 0 8 3.58 8 8a8.013 8.013 0 0 1-5.45 7.59c-.4.08-.55-.17-.55-.38 0-.27.01-1.13.01-2.2 0-.75-.25-1.23-.54-1.48 1.78-.2 3.65-.88 3.65-3.95 0-.88-.31-1.59-.82-2.15.08-.2.36-1.02-.08-2.12 0 0-.67-.22-2.2.82-.64-.18-1.32-.27-2-.27-.68 0-1.36.09-2 .27-1.53-1.03-2.2-.82-2.2-.82-.44 1.1-.16 1.92-.08 2.12-.51.56-.82 1.28-.82 2.15 0 3.06 1.86 3.75 3.64 3.95-.23.2-.44.55-.51 1.07-.46.21-1.61.55-2.33-.66-.15-.24-.6-.83-1.23-.82-.67.01-.27.38.01.53.34.19.73.9.82 1.13.16.45.68 1.31 2.69.94 0 .67.01 1.3.01 1.49 0 .21-.15.45-.55.38A7.995 7.995 0 0 1 0 8c0-4.42 3.58-8 8-8Z'};
+var utterancesLoad=0;
+
+let themeSettings={
+    "dark": ["dark","moon","#00f0ff","dark-blue"],
+    "light": ["light","sun","#ff5000","github-light"],
+    "auto": ["auto","sync","","preferred-color-scheme"]
+};
+function changeTheme(mode, icon, color, utheme){
+    document.documentElement.setAttribute("data-color-mode",mode);
+    document.getElementById("themeSwitch").setAttribute("d",value=IconList[icon]);
+    document.getElementById("themeSwitch").parentNode.style.color=color;
+    if(utterancesLoad==1){utterancesTheme(utheme);}
+}
+function modeSwitch(){
+    let currentMode=document.documentElement.getAttribute('data-color-mode');
+    let newMode = currentMode === "light" ? "dark" : currentMode === "dark" ? "auto" : "light";
+    localStorage.setItem("meek_theme", newMode);
+    if(themeSettings[newMode]){
+        changeTheme(...themeSettings[newMode]);
+    }
+}
+function utterancesTheme(theme){
+    const message={type:'set-theme',theme: theme};
+    const iframe=document.getElementsByClassName('utterances-frame')[0];
+    iframe.contentWindow.postMessage(message,'https://utteranc.es');
+}
+if(themeSettings[theme]){changeTheme(...themeSettings[theme]);}
+console.log("\n %c Gmeek last https://github.com/Meekdai/Gmeek \n\n","padding:5px 0;background:#02d81d;color:#fff");
+</script>
+
+<script>
+document.getElementById("pathHome").setAttribute("d",IconList["home"]);
+document.getElementById("pathIssue").setAttribute("d",IconList["github"]);
+
+function openComments(){
+    cm=document.getElementById("comments");
+    cmButton=document.getElementById("cmButton");
+    cmButton.innerHTML="loading";
+    span=document.createElement("span");
+    span.setAttribute("class","AnimatedEllipsis");
+    cmButton.appendChild(span);
+
+    script=document.createElement("script");
+    script.setAttribute("src","https://utteranc.es/client.js");
+    script.setAttribute("repo","yakun4566/yakun4566.github.io");
+    script.setAttribute("issue-term","title");
+    
+    if(localStorage.getItem("meek_theme")=="dark"){script.setAttribute("theme","dark-blue");}
+    else if(localStorage.getItem("meek_theme")=="light") {script.setAttribute("theme","github-light");}
+    else{script.setAttribute("theme","preferred-color-scheme");}
+    
+    script.setAttribute("crossorigin","anonymous");
+    script.setAttribute("async","");
+    cm.appendChild(script);
+
+    int=self.setInterval("iFrameLoading()",200);
+}
+
+function iFrameLoading(){
+    var utterances=document.getElementsByClassName('utterances');
+    if(utterances.length==1){
+        if(utterances[0].style.height!=""){
+            utterancesLoad=1;
+            int=window.clearInterval(int);
+            document.getElementById("cmButton").style.display="none";
+            console.log("utterances Load OK");
+        }
+    }
+}
+</script>
+
+
+
+</html>
