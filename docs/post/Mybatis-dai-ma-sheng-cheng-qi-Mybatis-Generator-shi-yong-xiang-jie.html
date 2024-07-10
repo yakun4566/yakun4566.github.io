@@ -212,7 +212,7 @@ body{box-sizing: border-box;min-width: 200px;max-width: 900px;margin: 20px auto;
 </li>
 </ul>
 <p><code class="notranslate">targetRuntime</code>属性的可选值比较多，这里做个简单的小结：</p>
-<table role="table">
+<markdown-accessiblity-table><table role="table">
 <thead>
 <tr>
 <th align="center">属性</th>
@@ -241,11 +241,11 @@ body{box-sizing: border-box;min-width: 200px;max-width: 900px;margin: 20px auto;
 <td align="center">已经过时，不推荐使用</td>
 </tr>
 </tbody>
-</table>
+</table></markdown-accessiblity-table>
 <p>笔者偏向于把<code class="notranslate">SQL</code>文件和代码分离，所以一般选用<code class="notranslate">MyBatis3</code>或者<code class="notranslate">MyBatis3Simple</code>。例如：</p>
 <div class="highlight highlight-text-xml"><pre class="notranslate">&lt;<span class="pl-ent">context</span> <span class="pl-e">id</span>=<span class="pl-s"><span class="pl-pds">"</span>default<span class="pl-pds">"</span></span> <span class="pl-e">targetRuntime</span>=<span class="pl-s"><span class="pl-pds">"</span>MyBatis3<span class="pl-pds">"</span></span>&gt;</pre></div>
 <p><code class="notranslate">&lt;context&gt;</code>标签支持0或N个<code class="notranslate">&lt;property&gt;</code>标签，<code class="notranslate">&lt;property&gt;</code>的可选属性有：</p>
-<table role="table">
+<markdown-accessiblity-table><table role="table">
 <thead>
 <tr>
 <th align="center">property属性</th>
@@ -310,10 +310,10 @@ body{box-sizing: border-box;min-width: 200px;max-width: 900px;margin: 20px auto;
 <td align="center">见<code class="notranslate">XmlFormatter</code>和<code class="notranslate">DefaultXmlFormatter</code></td>
 </tr>
 </tbody>
-</table>
+</table></markdown-accessiblity-table>
 <h3>jdbcConnection标签<a href="#jdbcconnection%E6%A0%87%E7%AD%BE">#</a></h3>
 <p><code class="notranslate">&lt;jdbcConnection&gt;</code>标签用于<strong>指定数据源的连接信息</strong>，它在<code class="notranslate">mybatis-generator-core</code>中对应的实现类为<code class="notranslate">org.mybatis.generator.config.JDBCConnectionConfiguration</code>，主要属性包括：</p>
-<table role="table">
+<markdown-accessiblity-table><table role="table">
 <thead>
 <tr>
 <th align="center">属性</th>
@@ -343,10 +343,10 @@ body{box-sizing: border-box;min-width: 200px;max-width: 900px;margin: 20px auto;
 <td align="center"><code class="notranslate">N</code></td>
 </tr>
 </tbody>
-</table>
+</table></markdown-accessiblity-table>
 <h3>commentGenerator标签<a href="#commentgenerator%E6%A0%87%E7%AD%BE">#</a></h3>
 <p><code class="notranslate">&lt;commentGenerator&gt;</code>标签是可选的，用于<strong>控制生成的实体的注释内容</strong>。它在<code class="notranslate">mybatis-generator-core</code>中对应的实现类为<code class="notranslate">org.mybatis.generator.internal.DefaultCommentGenerator</code>，可以通过可选的<code class="notranslate">type</code>属性指定一个自定义的<code class="notranslate">CommentGenerator</code>实现。<code class="notranslate">&lt;commentGenerator&gt;</code>标签支持0或N个<code class="notranslate">&lt;property&gt;</code>标签，<code class="notranslate">&lt;property&gt;</code>的可选属性有：</p>
-<table role="table">
+<markdown-accessiblity-table><table role="table">
 <thead>
 <tr>
 <th align="center">property属性</th>
@@ -376,11 +376,11 @@ body{box-sizing: border-box;min-width: 200px;max-width: 900px;margin: 20px auto;
 <td align="center"><code class="notranslate">false</code></td>
 </tr>
 </tbody>
-</table>
+</table></markdown-accessiblity-table>
 <p>笔者建议保持默认值，也就是什么注释都不输出，生成代码干净的实体。</p>
 <h3>javaTypeResolver标签<a href="#javatyperesolver%E6%A0%87%E7%AD%BE">#</a></h3>
 <p><code class="notranslate">&lt;javaTypeResolver&gt;</code>标签是<code class="notranslate">&lt;context&gt;</code>的子标签，用于解析和计算数据库列类型和<code class="notranslate">Java</code>类型的映射关系，该标签只包含一个<code class="notranslate">type</code>属性，用于指定<code class="notranslate">org.mybatis.generator.api.JavaTypeResolver</code>接口的实现类。<code class="notranslate">&lt;javaTypeResolver&gt;</code>标签支持0或N个<code class="notranslate">&lt;property&gt;</code>标签，<code class="notranslate">&lt;property&gt;</code>的可选属性有：</p>
-<table role="table">
+<markdown-accessiblity-table><table role="table">
 <thead>
 <tr>
 <th align="center">property属性</th>
@@ -400,9 +400,9 @@ body{box-sizing: border-box;min-width: 200px;max-width: 900px;margin: 20px auto;
 <td align="center"><code class="notranslate">false</code></td>
 </tr>
 </tbody>
-</table>
+</table></markdown-accessiblity-table>
 <p>如果<code class="notranslate">useJSR310Types</code>属性设置为<code class="notranslate">true</code>，那么生成代码的时候类型映射关系如下（主要针对日期时间类型）：</p>
-<table role="table">
+<markdown-accessiblity-table><table role="table">
 <thead>
 <tr>
 <th align="center">数据库（JDBC）类型</th>
@@ -431,7 +431,7 @@ body{box-sizing: border-box;min-width: 200px;max-width: 900px;margin: 20px auto;
 <td align="center"><code class="notranslate">java.time.OffsetDateTime</code></td>
 </tr>
 </tbody>
-</table>
+</table></markdown-accessiblity-table>
 <p>引入<code class="notranslate">mybatis-generator-core</code>后，可以查看<code class="notranslate">JavaTypeResolver</code>的默认实现为<code class="notranslate">JavaTypeResolverDefaultImpl</code>，从它的源码可以得知一些映射关系：</p>
 <div class="highlight highlight-source-java"><pre class="notranslate"><span class="pl-c1">BIGINT</span> --&gt; <span class="pl-smi">Long</span>
 <span class="pl-c1">BIT</span> --&gt; <span class="pl-smi">Boolean</span>
@@ -453,7 +453,7 @@ body{box-sizing: border-box;min-width: 200px;max-width: 900px;margin: 20px auto;
 <p>注意一点的是这种自定义实现<code class="notranslate">JavaTypeResolver</code>接口的方式使用编程式运行<code class="notranslate">MBG</code>会相对方便，如果需要使用<code class="notranslate">Maven</code>插件运行，那么需要把上面的<code class="notranslate">DefaultJavaTypeResolver</code>类打包到插件中。</p>
 <h3>javaModelGenerator标签<a href="#javamodelgenerator%E6%A0%87%E7%AD%BE">#</a></h3>
 <p><code class="notranslate">&lt;javaModelGenerator标签&gt;</code>标签是<code class="notranslate">&lt;context&gt;</code>的子标签，主要用于控制实体（<code class="notranslate">Model</code>）类的代码生成行为。它支持的属性如下：</p>
-<table role="table">
+<markdown-accessiblity-table><table role="table">
 <thead>
 <tr>
 <th align="center">属性</th>
@@ -476,9 +476,9 @@ body{box-sizing: border-box;min-width: 200px;max-width: 900px;margin: 20px auto;
 <td align="center">例如<code class="notranslate">src/main/java</code></td>
 </tr>
 </tbody>
-</table>
+</table></markdown-accessiblity-table>
 <p><code class="notranslate">&lt;javaModelGenerator标签&gt;</code>标签支持0或N个<code class="notranslate">&lt;property&gt;</code>标签，<code class="notranslate">&lt;property&gt;</code>的可选属性有：</p>
-<table role="table">
+<markdown-accessiblity-table><table role="table">
 <thead>
 <tr>
 <th align="center">property属性</th>
@@ -531,10 +531,10 @@ body{box-sizing: border-box;min-width: 200px;max-width: 900px;margin: 20px auto;
 <td align="center">-</td>
 </tr>
 </tbody>
-</table>
+</table></markdown-accessiblity-table>
 <h3>javaClientGenerator标签<a href="#javaclientgenerator%E6%A0%87%E7%AD%BE">#</a></h3>
 <p><code class="notranslate">&lt;javaClientGenerator&gt;</code>标签是<code class="notranslate">&lt;context&gt;</code>的子标签，主要用于控制<code class="notranslate">Mapper</code>接口的代码生成行为。它支持的属性如下：</p>
-<table role="table">
+<markdown-accessiblity-table><table role="table">
 <thead>
 <tr>
 <th align="center">属性</th>
@@ -563,7 +563,7 @@ body{box-sizing: border-box;min-width: 200px;max-width: 900px;margin: 20px auto;
 <td align="center">例如<code class="notranslate">src/main/java</code></td>
 </tr>
 </tbody>
-</table>
+</table></markdown-accessiblity-table>
 <p><code class="notranslate">type</code>属性的可选值如下：</p>
 <ul>
 <li><code class="notranslate">ANNOTATEDMAPPER</code>：<code class="notranslate">Mapper</code>接口生成的时候依赖于注解和<code class="notranslate">SqlProviders</code>（也就是纯注解实现），不会生成<code class="notranslate">XML</code>映射文件。</li>
@@ -576,7 +576,7 @@ body{box-sizing: border-box;min-width: 200px;max-width: 900px;margin: 20px auto;
 <li><code class="notranslate">&lt;context&gt;</code>标签的<code class="notranslate">targetRuntime</code>属性指定为<code class="notranslate">MyBatis3</code>的时候，<code class="notranslate">type</code>可以选用<code class="notranslate">ANNOTATEDMAPPER</code>、<code class="notranslate">XMLMAPPER</code>或者<code class="notranslate">MIXEDMAPPER</code>。</li>
 </ul>
 <p><code class="notranslate">&lt;javaClientGenerator&gt;</code>标签支持0或N个<code class="notranslate">&lt;property&gt;</code>标签，<code class="notranslate">&lt;property&gt;</code>的可选属性有：</p>
-<table role="table">
+<markdown-accessiblity-table><table role="table">
 <thead>
 <tr>
 <th align="center">property属性</th>
@@ -605,10 +605,10 @@ body{box-sizing: border-box;min-width: 200px;max-width: 900px;margin: 20px auto;
 <td align="center">通过<code class="notranslate">value</code>指定父接口的全类名即可</td>
 </tr>
 </tbody>
-</table>
+</table></markdown-accessiblity-table>
 <h3>sqlMapGenerator标签<a href="#sqlmapgenerator%E6%A0%87%E7%AD%BE">#</a></h3>
 <p><code class="notranslate">&lt;sqlMapGenerator&gt;</code>标签是<code class="notranslate">&lt;context&gt;</code>的子标签，主要用于控制<code class="notranslate">XML</code>映射文件的代码生成行为。它支持的属性如下：</p>
-<table role="table">
+<markdown-accessiblity-table><table role="table">
 <thead>
 <tr>
 <th align="center">属性</th>
@@ -631,9 +631,9 @@ body{box-sizing: border-box;min-width: 200px;max-width: 900px;margin: 20px auto;
 <td align="center">例如<code class="notranslate">src/main/resources</code></td>
 </tr>
 </tbody>
-</table>
+</table></markdown-accessiblity-table>
 <p><code class="notranslate">&lt;sqlMapGenerator&gt;</code>标签支持0或N个<code class="notranslate">&lt;property&gt;</code>标签，<code class="notranslate">&lt;property&gt;</code>的可选属性有：</p>
-<table role="table">
+<markdown-accessiblity-table><table role="table">
 <thead>
 <tr>
 <th align="center">property属性</th>
@@ -650,12 +650,12 @@ body{box-sizing: border-box;min-width: 200px;max-width: 900px;margin: 20px auto;
 <td align="center">-</td>
 </tr>
 </tbody>
-</table>
+</table></markdown-accessiblity-table>
 <h3>plugin标签<a href="#plugin%E6%A0%87%E7%AD%BE">#</a></h3>
 <p><code class="notranslate">&lt;plugin&gt;</code>标签是<code class="notranslate">&lt;context&gt;</code>的子标签，用于引入一些插件对代码生成的一些特性进行扩展，该标签只包含一个<code class="notranslate">type</code>属性，用于指定<code class="notranslate">org.mybatis.generator.api.Plugin</code>接口的实现类。内置的插件实现见<a href="http://mybatis.org/generator/reference/plugins.html" rel="nofollow">Supplied Plugins</a>。例如：引入<code class="notranslate">org.mybatis.generator.plugins.SerializablePlugin</code>插件会让生成的实体类自动实现<code class="notranslate">java.io.Serializable</code>接口并且添加<code class="notranslate">serialVersionUID</code>属性。</p>
 <h3>table标签<a href="#table%E6%A0%87%E7%AD%BE">#</a></h3>
 <p><code class="notranslate">&lt;table&gt;</code>标签是<code class="notranslate">&lt;context&gt;</code>的子标签，主要用于配置要生成代码的数据库表格，定制一些代码生成行为等等。它支持的属性众多，列举如下：</p>
-<table role="table">
+<markdown-accessiblity-table><table role="table">
 <thead>
 <tr>
 <th align="center">属性</th>
@@ -792,9 +792,9 @@ body{box-sizing: border-box;min-width: 200px;max-width: 900px;margin: 20px auto;
 <td align="center">默认值为<code class="notranslate">false</code>，如果设置为<code class="notranslate">true</code>，所有列名会添加起始和结束分隔符</td>
 </tr>
 </tbody>
-</table>
+</table></markdown-accessiblity-table>
 <p><code class="notranslate">&lt;table&gt;</code>标签支持0或N个<code class="notranslate">&lt;property&gt;</code>标签，<code class="notranslate">&lt;property&gt;</code>的可选属性有：</p>
-<table role="table">
+<markdown-accessiblity-table><table role="table">
 <thead>
 <tr>
 <th align="center">property属性</th>
@@ -889,7 +889,7 @@ body{box-sizing: border-box;min-width: 200px;max-width: 900px;margin: 20px auto;
 <td align="center">-</td>
 </tr>
 </tbody>
-</table>
+</table></markdown-accessiblity-table>
 <p><code class="notranslate">&lt;table&gt;</code>标签还支持众多的<strong>非</strong><code class="notranslate">property</code>的子标签：</p>
 <ul>
 <li>0或1个<code class="notranslate">&lt;generatedKey&gt;</code>用于指定主键生成的规则，指定此标签后会生成一个<code class="notranslate">&lt;selectKey&gt;</code>标签：</li>
