@@ -1357,7 +1357,7 @@ body{box-sizing: border-box;min-width: 200px;max-width: 900px;margin: 20px auto;
     <span class="pl-smi">int</span> <span class="pl-en">updateByPrimaryKey</span>(<span class="pl-smi">Order</span> <span class="pl-s1">record</span>);
 }
 
-<span class="pl-c">// mappings</span><span class="pl-s1"></span>
+<span class="pl-c">// mappings</span>
 &lt;?<span class="pl-s1">xml</span> <span class="pl-s1">version</span>=<span class="pl-s">"1.0"</span> <span class="pl-s1">encoding</span>=<span class="pl-s">"UTF-8"</span>?&gt;
 &lt;!<span class="pl-smi">DOCTYPE</span> <span class="pl-s1">mapper</span> <span class="pl-c1">PUBLIC</span> <span class="pl-s">"-//mybatis.org//DTD Mapper 3.0//EN"</span> "<span class="pl-s1">http</span>:<span class="pl-c">//mybatis.org/dtd/mybatis-3-mapper.dtd"&gt;</span>
 &lt;<span class="pl-smi">mapper</span> <span class="pl-s1">namespace</span>=<span class="pl-s">"club.throwable.dao.OrderMapper"</span>&gt;
@@ -1375,7 +1375,7 @@ body{box-sizing: border-box;min-width: 200px;max-width: 900px;margin: 20px auto;
     &lt;/<span class="pl-s1">delete</span>&gt;
     &lt;<span class="pl-smi">insert</span> <span class="pl-s1">id</span>=<span class="pl-s">"insert"</span> <span class="pl-s1">parameterType</span>=<span class="pl-s">"club.throwable.entity.Order"</span>&gt;
         &lt;<span class="pl-smi">selectKey</span> <span class="pl-s1">keyProperty</span>=<span class="pl-s">"id"</span> <span class="pl-s1">order</span>=<span class="pl-s">"AFTER"</span> <span class="pl-s1">resultType</span>=<span class="pl-s">"java.lang.Long"</span>&gt;
-            <span class="pl-smi">SELECT</span> <span class="pl-en">LAST_INSERT_ID</span>()
+            <span class="pl-smi">SELECT</span> <span class="pl-c1">LAST_INSERT_ID</span>()
         &lt;/<span class="pl-s1">selectKey</span>&gt;
         <span class="pl-smi">insert</span> <span class="pl-s1">into</span> <span class="pl-en">t_order</span> (<span class="pl-s1">order_id</span>, <span class="pl-s1">create_time</span>, <span class="pl-s1">amount</span>,
         <span class="pl-s1">order_status</span>)
@@ -1413,7 +1413,7 @@ body{box-sizing: border-box;min-width: 200px;max-width: 900px;margin: 20px auto;
     &lt;/<span class="pl-s1">delete</span>&gt;
     &lt;<span class="pl-smi">insert</span> <span class="pl-s1">id</span>=<span class="pl-s">"insert"</span> <span class="pl-s1">parameterType</span>=<span class="pl-s">"club.throwable.entity.Order"</span>&gt;
         &lt;<span class="pl-smi">selectKey</span> <span class="pl-s1">keyProperty</span>=<span class="pl-s">"id"</span> <span class="pl-s1">order</span>=<span class="pl-s">"BEFORE"</span> <span class="pl-s1">resultType</span>=<span class="pl-s">"java.lang.Long"</span>&gt;
-            <span class="pl-smi">SELECT</span> <span class="pl-en">LAST_INSERT_ID</span>()
+            <span class="pl-smi">SELECT</span> <span class="pl-c1">LAST_INSERT_ID</span>()
         &lt;/<span class="pl-s1">selectKey</span>&gt;
         <span class="pl-smi">insert</span> <span class="pl-s1">into</span> <span class="pl-en">t_order</span> (<span class="pl-s1">id</span>, <span class="pl-s1">order_id</span>, <span class="pl-s1">create_time</span>,
         <span class="pl-s1">amount</span>, <span class="pl-s1">order_status</span>)
